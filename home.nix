@@ -34,6 +34,7 @@
 
   home.sessionVariables = {
     EDITOR = "nvim";
+    VISUAL = "nvim";
   };
 
   programs.home-manager.enable = true;
