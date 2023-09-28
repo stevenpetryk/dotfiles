@@ -11,6 +11,7 @@
     ffmpeg
     hyperfine
     imagemagick
+    lz4
     ncdu
     neovim
     nixpkgs-fmt
