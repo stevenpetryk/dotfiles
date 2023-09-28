@@ -20,6 +20,8 @@
     tree
     watch
     youtube-dl
+
+    (import ./fonts/gg.nix { inherit pkgs; })
   ];
 
   home.shellAliases = {
@@ -75,4 +77,6 @@
 
   programs.zsh.prezto.enable = true;
   programs.zsh.prezto.prompt.theme = "pure";
+
+  fonts.fontconfig.enable = true;
 }
