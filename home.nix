@@ -29,7 +29,7 @@
     ghpdf = "git push && gh pr create -df";
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
-    b = "gb";
+    b = "fzfbranch";
   };
 
   home.sessionVariables = {
@@ -44,7 +44,7 @@
   programs.zsh.autocd = true;
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
-    gb() {
+    fzfbranch() {
       git rev-parse --is-inside-work-tree >/dev/null
       branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
       git switch $branch
@@ -53,6 +53,14 @@
 
   programs.git.enable = true;
   programs.git.diff-so-fancy.enable = true;
+  programs.git.extraConfig = {
+    user.name = "Steven Petryk";
+    user.email = "petryk.steven@gmail.com";
+    init.defaultBranch = "main";
+    push.default = "current";
+    branch.autosetupmerge = true;
+    core.editor = "vim";
+  };
   programs.gh.enable = true;
 
   programs.fzf.enable = true;
