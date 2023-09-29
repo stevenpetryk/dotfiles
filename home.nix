@@ -53,6 +53,7 @@
   programs.zsh.enableSyntaxHighlighting = true;
   programs.zsh.enableAutosuggestions = true;
   programs.zsh.autocd = true;
+  programs.zsh.defaultKeymap = "emacs";
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
 
