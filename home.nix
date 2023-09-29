@@ -56,8 +56,9 @@
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
 
-    source ${pkgs.pure-prompt}/share/zsh/site-functions/async
-    source ${pkgs.pure-prompt}/share/zsh/site-functions/prompt_pure_setup
+    fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
+    autoload -U promptinit; promptinit
+    prompt pure
   '';
 
   programs.git.enable = true;
