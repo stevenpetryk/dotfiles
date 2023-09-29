@@ -76,6 +76,8 @@
   programs.fzf.enable = true;
   programs.fzf.enableZshIntegration = true;
 
+  programs.htop.enable = true;
+
   programs.bat.enable = true;
 
   programs.autojump.enable = true;
