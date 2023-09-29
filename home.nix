@@ -15,6 +15,7 @@
     ncdu
     neovim
     nixpkgs-fmt
+    pure-prompt
     ripgrep
     tig
     tree
@@ -22,6 +23,12 @@
     youtube-dl
 
     (import ./fonts/gg.nix { inherit pkgs; })
+
+    (pkgs.writeScriptBin "fzfbranch" ''
+      git rev-parse --is-inside-work-tree >/dev/null
+      branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
+      git switch $branch
+    '')
   ];
 
   home.shellAliases = {
@@ -48,11 +55,9 @@
   programs.zsh.autocd = true;
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
-    fzfbranch() {
-      git rev-parse --is-inside-work-tree >/dev/null
-      branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
-      git switch $branch
-    }
+
+    source ${pkgs.pure-prompt}/share/zsh/site-functions/async
+    source ${pkgs.pure-prompt}/share/zsh/site-functions/prompt_pure_setup
   '';
 
   programs.git.enable = true;
@@ -63,7 +68,7 @@
     init.defaultBranch = "main";
     push.default = "current";
     branch.autosetupmerge = true;
-    core.editor = "vim";
+    core.editor = "nvim";
   };
   programs.gh.enable = true;
 
@@ -74,9 +79,6 @@
 
   programs.autojump.enable = true;
   programs.autojump.enableZshIntegration = true;
-
-  programs.zsh.prezto.enable = true;
-  programs.zsh.prezto.prompt.theme = "pure";
 
   fonts.fontconfig.enable = true;
 }
