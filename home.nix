@@ -54,6 +54,19 @@
   programs.zsh.enableAutosuggestions = true;
   programs.zsh.autocd = true;
   programs.zsh.defaultKeymap = "emacs";
+  programs.zsh.plugins = [
+    {
+      name = "zsh-k";
+      file = "k.sh";
+      src = pkgs.fetchFromGitHub {
+        owner = "supercrabtree";
+        repo = "k";
+        rev = "e2bfbaf3b8ca92d6ffc4280211805ce4b8a8c19e";
+        sha256 = "sha256-32rJjBzqS2e6w/L78KMNwQRg4E3sqqdAmb87XEhqbRQ=";
+      };
+    }
+  ];
+
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
 
