@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, system, ... }:
 
 {
   home.username = "steven";
@@ -23,6 +23,8 @@
     youtube-dl
 
     (import ./fonts/gg.nix { inherit pkgs; })
+
+    (import ./pkgs/ast-grep.nix { inherit pkgs system; })
 
     (pkgs.writeScriptBin "fzfbranch" ''
       git rev-parse --is-inside-work-tree >/dev/null
