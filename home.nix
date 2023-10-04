@@ -49,6 +49,10 @@
     VISUAL = "nvim";
   };
 
+  home.sessionPath = [
+    "$HOME/src/discord/.local/bin"
+  ];
+
   programs.home-manager.enable = true;
 
   programs.zsh.enable = true;
