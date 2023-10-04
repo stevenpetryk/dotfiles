@@ -49,10 +49,6 @@
     VISUAL = "nvim";
   };
 
-  home.sessionPath = [
-    "$HOME/src/discord/.local/bin"
-  ];
-
   programs.home-manager.enable = true;
 
   programs.zsh.enable = true;
@@ -79,6 +75,8 @@
     fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
     autoload -U promptinit; promptinit
     prompt pure
+
+    export PATH="$HOME/src/discord/.local/bin:$PATH"
   '';
 
   programs.git.enable = true;
