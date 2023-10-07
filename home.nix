@@ -7,6 +7,7 @@
   home.stateVersion = "23.05";
 
   home.packages = with pkgs; [
+    asciiquarium
     coreutils
     ffmpeg
     hyperfine
@@ -42,6 +43,9 @@
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
     b = "fzfbranch";
+
+    # pnpm development
+    pd = "~/src/pnpm/pnpm/dev/pd.js";
   };
 
   home.sessionVariables = {
