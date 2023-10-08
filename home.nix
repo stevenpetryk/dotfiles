@@ -43,9 +43,6 @@
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
     b = "fzfbranch";
-
-    # pnpm development
-    pd = "~/src/pnpm/pnpm/dev/pd.js";
   };
 
   home.sessionVariables = {
@@ -81,6 +78,7 @@
     prompt pure
 
     export PATH="$HOME/src/discord/.local/bin:$PATH"
+    export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
   '';
 
   programs.git.enable = true;
