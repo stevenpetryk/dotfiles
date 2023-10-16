@@ -32,6 +32,10 @@
       branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
       git switch $branch
     '')
+
+    (pkgs.writeScriptBin "cheat" ''
+      curl -s "cht.sh/$1" | less -R
+    '')
   ];
 
   home.shellAliases = {
