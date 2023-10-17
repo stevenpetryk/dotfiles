@@ -16,6 +16,7 @@
     ncdu
     neovim
     nixpkgs-fmt
+    pngquant
     pure-prompt
     ripgrep
     tig
