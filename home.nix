@@ -95,6 +95,7 @@
     push.default = "current";
     branch.autosetupmerge = true;
     core.editor = "nvim";
+    fetch.prune = true;
   };
   programs.gh.enable = true;
 
