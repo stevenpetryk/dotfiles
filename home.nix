@@ -91,10 +91,13 @@
   programs.git.extraConfig = {
     user.name = "Steven Petryk";
     user.email = "petryk.steven@gmail.com";
+
+    core.editor = "nvim";
+
     init.defaultBranch = "main";
     push.default = "current";
+    push.autoSetupRemote = true;
     branch.autosetupmerge = true;
-    core.editor = "nvim";
     fetch.prune = true;
   };
   programs.gh.enable = true;
