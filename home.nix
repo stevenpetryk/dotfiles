@@ -34,6 +34,11 @@
       git switch $branch
     '')
 
+    (pkgs.writeScriptBin "whomst" ''
+      node -e "console.log(require.resolve('$1/package.json'))"
+      node -e "console.log(require('$1/package.json').version)"
+    '')
+
     (pkgs.writeScriptBin "cheat" ''
       curl -s "cht.sh/$1" | less -R
     '')
