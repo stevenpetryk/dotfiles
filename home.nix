@@ -14,6 +14,7 @@
     imagemagick
     lz4
     ncdu
+    neofetch
     neovim
     nixpkgs-fmt
     pngquant
@@ -35,8 +36,7 @@
     '')
 
     (pkgs.writeScriptBin "whomst" ''
-      node -e "console.log(require.resolve('$1/package.json'))"
-      node -e "console.log(require('$1/package.json').version)"
+      ${pkgs.nodejs_20}/bin/node ${./scripts/whomst.js} $1
     '')
 
     (pkgs.writeScriptBin "cheat" ''
