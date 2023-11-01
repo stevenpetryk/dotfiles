@@ -80,6 +80,8 @@
     }
   ];
 
+  programs.kitty.enable = true;
+
   programs.zsh.initExtra = ''
     source /Users/steven/.nix-profile/etc/profile.d/nix.sh
 
