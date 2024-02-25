@@ -35,10 +35,6 @@
       git switch $branch
     '')
 
-    (pkgs.writeScriptBin "whomst" ''
-      ${pkgs.nodejs_20}/bin/node ${./scripts/whomst.js} $1
-    '')
-
     (pkgs.writeScriptBin "cheat" ''
       curl -s "cht.sh/$1" | less -R
     '')
