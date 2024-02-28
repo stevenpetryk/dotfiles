@@ -15,7 +15,7 @@
       system = "x86_64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
     in
-    {
+    rec {
       homeConfigurations."steven" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
 
@@ -29,5 +29,6 @@
           inherit system;
         };
       };
+      homeConfigurations."steven.petryk" = homeConfigurations."steven";
     };
 }
