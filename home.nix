@@ -1,8 +1,8 @@
-{ config, pkgs, system, ... }:
+{ config, pkgs, system, username, ... }:
 
 {
-  home.username = "steven";
-  home.homeDirectory = "/Users/steven";
+  home.username = username;
+  home.homeDirectory = "/Users/${username}";
 
   home.stateVersion = "23.05";
 
@@ -58,6 +58,8 @@
 
   programs.home-manager.enable = true;
 
+
+
   programs.zsh.enable = true;
   programs.zsh.enableSyntaxHighlighting = true;
   programs.zsh.enableAutosuggestions = true;
@@ -79,7 +81,7 @@
   programs.kitty.enable = true;
 
   programs.zsh.initExtra = ''
-    source /Users/steven/.nix-profile/etc/profile.d/nix.sh
+    source $HOME/.nix-profile/etc/profile.d/nix.sh
 
     fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
     autoload -U promptinit; promptinit
