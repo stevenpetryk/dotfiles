@@ -78,8 +78,6 @@
     }
   ];
 
-  programs.kitty.enable = true;
-
   programs.zsh.initExtra = ''
     source $HOME/.nix-profile/etc/profile.d/nix.sh
 
@@ -114,8 +112,8 @@
 
   programs.bat.enable = true;
 
-  programs.autojump.enable = true;
-  programs.autojump.enableZshIntegration = true;
+  programs.zoxide.enable = true;
+  programs.zoxide.enableZshIntegration = true;
 
   fonts.fontconfig.enable = true;
 }
