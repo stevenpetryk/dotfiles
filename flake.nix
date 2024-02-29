@@ -18,8 +18,7 @@
           inherit system username homeDirectory isWork;
         };
       };
-    in
-    rec {
+    in {
       # Personal
       homeConfigurations."steven" = createConfiguration rec {
         system = "x86_64-darwin";
