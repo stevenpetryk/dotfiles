@@ -46,9 +46,11 @@
     gc = "git commit";
     gd = "git diff";
     ghpdf = "git push && gh pr create -df";
+    ghlfg = "gh pr ready && gh pr merge";
+    b = "fzfbranch";
+  } // pkgs.lib.optionalAttrs isWork {
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
-    b = "fzfbranch";
   };
 
   home.sessionVariables = {
