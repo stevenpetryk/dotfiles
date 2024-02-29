@@ -1,8 +1,7 @@
 {
-  description = "Home Manager configuration of steven";
+  description = "My dotfiles";
 
   inputs = {
-    # Specify the source of Home Manager and Nixpkgs.
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     home-manager = {
       url = "github:nix-community/home-manager/release-23.05";
@@ -12,27 +11,35 @@
 
   outputs = { nixpkgs, home-manager, ... }:
     let
-      system = "x86_64-darwin";
-      pkgs = nixpkgs.legacyPackages.${system};
+      createConfiguration = { system, username, homeDirectory, isWork }: home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.${system};
+        modules = [ ./home.nix ];
+        extraSpecialArgs = {
+          inherit system username homeDirectory isWork;
+        };
+      };
     in
     rec {
       # Personal
-      homeConfigurations."steven" = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        modules = [ ./home.nix ];
-        extraSpecialArgs = {
-          inherit system;
-          username = "steven";
-        };
+      homeConfigurations."steven" = createConfiguration rec {
+        system = "x86_64-darwin";
+        username = "steven";
+        homeDirectory = "/Users/${username}";
+        isWork = false;
       };
-      # Work
-      homeConfigurations."steven.petryk" = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        modules = [ ./home.nix ];
-        extraSpecialArgs = {
-          inherit system;
-          username = "steven.petryk";
-        };
+      # Work Mac
+      homeConfigurations."steven.petryk" = createConfiguration rec {
+        system = "x86_64-darwin";
+        username = "steven.petryk";
+        homeDirectory = "/Users/${username}";
+        isWork = true;
+      };
+      # Work Coder
+      homeConfigurations."discord" = createConfiguration rec {
+        system = "x86_64-linux";
+        username = "discord";
+        homeDirectory = "/home/${username}";
+        isWork = true;
       };
     };
 }

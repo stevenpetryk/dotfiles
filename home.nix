@@ -1,8 +1,8 @@
-{ config, pkgs, system, username, ... }:
+{ config, pkgs, system, username, homeDirectory, isWork, ... }:
 
 {
   home.username = username;
-  home.homeDirectory = "/Users/${username}";
+  home.homeDirectory = homeDirectory;
 
   home.stateVersion = "23.05";
 
@@ -58,42 +58,30 @@
 
   programs.home-manager.enable = true;
 
-
-
   programs.zsh.enable = true;
   programs.zsh.enableSyntaxHighlighting = true;
   programs.zsh.enableAutosuggestions = true;
   programs.zsh.autocd = true;
   programs.zsh.defaultKeymap = "emacs";
-  programs.zsh.plugins = [
-    {
-      name = "zsh-k";
-      file = "k.sh";
-      src = pkgs.fetchFromGitHub {
-        owner = "supercrabtree";
-        repo = "k";
-        rev = "e2bfbaf3b8ca92d6ffc4280211805ce4b8a8c19e";
-        sha256 = "sha256-32rJjBzqS2e6w/L78KMNwQRg4E3sqqdAmb87XEhqbRQ=";
-      };
-    }
-  ];
 
   programs.zsh.initExtra = ''
-    source $HOME/.nix-profile/etc/profile.d/nix.sh
-
     fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
     autoload -U promptinit; promptinit
     prompt pure
 
-    export PATH="$HOME/src/discord/.local/bin:$PATH"
     export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
+
+    ${if isWork then ''
+      source $HOME/.nix-profile/etc/profile.d/nix.sh
+      export PATH="$HOME/src/discord/.local/bin:$PATH"
+    '' else ""}
   '';
 
   programs.git.enable = true;
   programs.git.diff-so-fancy.enable = true;
   programs.git.extraConfig = {
     user.name = "Steven Petryk";
-    user.email = "petryk.steven@gmail.com";
+    user.email = if isWork then "steven.petryk@discordapp.com" else "petryk.steven@gmail.com";
 
     core.editor = "nvim";
 
