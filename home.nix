@@ -104,6 +104,7 @@
     fetch.prune = true;
   };
   programs.gh.enable = true;
+  programs.gh.settings.git_protocol = "ssh";
 
   programs.fzf.enable = true;
   programs.fzf.enableZshIntegration = true;
