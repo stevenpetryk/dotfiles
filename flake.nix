@@ -40,5 +40,11 @@
         homeDirectory = "/home/${username}";
         isWork = true;
       };
+
+      # Ensure Coder has a home-manager flake
+      apps.x86_64-linux.home-manager = {
+        type = "app";
+        program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
+      };
     };
 }
