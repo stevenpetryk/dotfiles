@@ -20,6 +20,7 @@
     pngquant
     pure-prompt
     ripgrep
+    rustup
     tig
     tree
     watch
@@ -51,6 +52,7 @@
   } // pkgs.lib.optionalAttrs isWork {
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
+    unjamfme = "sudo protectctl diagnostics -d 10 -l debug";
   };
 
   home.sessionVariables = {
