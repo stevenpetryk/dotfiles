@@ -18,10 +18,11 @@
           inherit system username homeDirectory isWork;
         };
       };
-    in {
+    in
+    {
       # Personal
       homeConfigurations."steven" = createConfiguration rec {
-        system = "x86_64-darwin";
+        system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
         isWork = false;
@@ -45,6 +46,12 @@
       apps.x86_64-linux.home-manager = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
+      };
+
+      # Manage personal system with flakes too
+      apps.aarch64-darwin.home-manager = {
+        type = "app";
+        program = "${nixpkgs.legacyPackages.aarch64-darwin.home-manager}/bin/home-manager";
       };
     };
 }
