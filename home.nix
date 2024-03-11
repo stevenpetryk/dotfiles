@@ -28,8 +28,6 @@
 
     (import ./fonts/gg.nix { inherit pkgs; })
 
-    (import ./pkgs/ast-grep.nix { inherit pkgs system; })
-
     (pkgs.writeScriptBin "fzfbranch" ''
       git rev-parse --is-inside-work-tree >/dev/null
       branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
@@ -94,6 +92,7 @@
     push.autoSetupRemote = true;
     branch.autosetupmerge = true;
     fetch.prune = true;
+    pull.rebase = true;
   };
   programs.gh.enable = true;
   programs.gh.settings.git_protocol = "ssh";
