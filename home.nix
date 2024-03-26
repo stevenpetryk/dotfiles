@@ -87,6 +87,8 @@
     user.email = if isWork then "steven.petryk@discordapp.com" else "petryk.steven@gmail.com";
 
     core.editor = "nvim";
+    core.fsmonitor = true;
+    core.untrackedcache = true;
 
     init.defaultBranch = "main";
     push.default = "current";
