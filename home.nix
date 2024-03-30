@@ -110,5 +110,11 @@
   programs.zoxide.enable = true;
   programs.zoxide.enableZshIntegration = true;
 
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
+    nix-direnv.enable = true;
+  };
+
   fonts.fontconfig.enable = true;
 }
