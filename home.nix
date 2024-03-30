@@ -37,7 +37,9 @@
     (pkgs.writeScriptBin "cheat" ''
       curl -s "cht.sh/$1" | less -R
     '')
-  ];
+  ] ++ (if !isWork then [
+    pkgs.nodejs_20
+  ] else [ ]);
 
   home.shellAliases = {
     gs = "git status -sb";
