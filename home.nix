@@ -51,6 +51,7 @@
     b = "fzfbranch";
   } // pkgs.lib.optionalAttrs isWork {
     ghpdf = "git push --no-verify && gh pr create -df";
+    ghpdfv = "git push --no-verify && gh pr create -df && gh pr view -w";
     ghlfg = "gh pr ready && gh pr comment -b '/merge'";
     claw = "WEB_ENTRY_ONLY=1 clyde app watch prod";
     unjamfme = "sudo protectctl diagnostics -d 10 -l debug";
@@ -97,7 +98,6 @@
     push.autoSetupRemote = true;
     branch.autosetupmerge = true;
     fetch.prune = true;
-    pull.rebase = true;
   };
   programs.gh.enable = true;
   programs.gh.settings.git_protocol = "ssh";
