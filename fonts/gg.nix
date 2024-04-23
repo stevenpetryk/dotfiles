@@ -5,16 +5,16 @@ with pkgs;
 (stdenvNoCC.mkDerivation
 rec {
   pname = "gg-mono";
-  version = "20231018";
+  version = "20231211";
 
   src = builtins.fetchGit {
     url = "git@github.com:Colophon-Foundry/discord-text-type.git";
     ref = "HEAD";
-    rev = "eea82d9006edf69c565d32a00374678044caf46c";
+    rev = "ee4aab6888f4e8996cf099f0066eebb7c72db451";
   };
 
   installPhase = ''
     mkdir -p $out/share/fonts/truetype
-    cp -r betas/20231018/*.ttf $out/share/fonts/truetype
+    cp -r release/Mono/20231211-v1.001/TTF/*.ttf $out/share/fonts/truetype
   '';
 })
