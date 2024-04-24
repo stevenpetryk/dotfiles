@@ -29,9 +29,14 @@
     (import ./fonts/gg.nix { inherit pkgs; })
 
     (pkgs.writeScriptBin "fzfbranch" ''
-      git rev-parse --is-inside-work-tree >/dev/null
-      branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads/ | fzf -q "$1")
-      git switch $branch
+      git branch --sort=-committerdate --format="%(refname:short)" |
+      fzf \
+        --ansi \
+        --bind "enter:execute(echo {} | xargs git checkout)+abort" \
+        --bind "ctrl-o:execute(echo {} | xargs | pbcopy)" \
+        --bind "ctrl-p:execute(echo {} | xargs gh pr view --web)" \
+        --preview="echo {} | xargs -I{} git diff --stat --color \$(git merge-base {} main) {}" \
+        --preview-window 'right,70%'
     '')
 
     (pkgs.writeScriptBin "cheat" ''
