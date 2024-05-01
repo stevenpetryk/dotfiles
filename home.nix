@@ -87,6 +87,10 @@
       source $HOME/.nix-profile/etc/profile.d/nix.sh
       export PATH="$HOME/src/discord/.local/bin:$PATH"
     '' else ""}
+
+    ${if isWork && system == "x86_64-linux" then ''
+      source ${./discord/fix-coder-ssh.sh}
+    '' else ""}
   '';
 
   programs.git.enable = true;
