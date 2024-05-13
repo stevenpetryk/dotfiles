@@ -100,14 +100,16 @@
     user.email = if isWork then "steven.petryk@discordapp.com" else "petryk.steven@gmail.com";
 
     core.editor = "nvim";
-    core.fsmonitor = true;
-    core.untrackedcache = true;
 
     init.defaultBranch = "main";
     push.default = "current";
     push.autoSetupRemote = true;
     branch.autosetupmerge = true;
     fetch.prune = true;
+  } // pkgs.lib.optionalAttrs (isWork && system == "x86_64-darwin") {
+    # These options get weird in Coder for some reason
+    core.fsmonitor = true;
+    core.untrackedcache = true;
   };
   programs.gh.enable = true;
   programs.gh.settings.git_protocol = "ssh";
