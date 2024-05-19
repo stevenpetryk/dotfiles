@@ -94,7 +94,7 @@
   '';
 
   programs.git.enable = true;
-  programs.git.diff-so-fancy.enable = true;
+  programs.git.delta.enable = true;
   programs.git.extraConfig = {
     user.name = "Steven Petryk";
     user.email = if isWork then "steven.petryk@discordapp.com" else "petryk.steven@gmail.com";
@@ -123,6 +123,16 @@
 
   programs.zoxide.enable = true;
   programs.zoxide.enableZshIntegration = true;
+
+  programs.ssh.enable = true;
+  programs.ssh.package = pkgs.openssh;
+  programs.ssh.matchBlocks = {
+    cowiemac = {
+      forwardAgent = true;
+      hostname = "100.78.79.62";
+      user = "cowie";
+    };
+  };
 
   programs.direnv = {
     enable = true;
