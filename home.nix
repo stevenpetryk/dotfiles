@@ -131,6 +131,11 @@
       forwardAgent = true;
       hostname = "100.78.79.62";
       user = "cowie";
+      localForwards = [{
+        bind.port = 5900;
+        host.address = "localhost";
+        host.port = 5900;
+      }];
     };
   };
 
