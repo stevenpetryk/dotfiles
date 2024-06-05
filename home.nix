@@ -20,7 +20,6 @@
     pngquant
     pure-prompt
     ripgrep
-    rustup
     tig
     tree
     watch
@@ -44,6 +43,7 @@
     '')
   ] ++ (if !isWork then [
     pkgs.nodejs_20
+    pkgs.rustup
   ] else [ ]);
 
   home.shellAliases = {
