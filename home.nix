@@ -83,6 +83,10 @@
 
     export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
 
+    ${if isWork then ''
+      . "$HOME/.cargo/env"
+    '' else ""}
+
     ${if isWork && system == "x86_64-darwin" then ''
       source $HOME/.nix-profile/etc/profile.d/nix.sh
       export PATH="$HOME/src/discord/.local/bin:$PATH"
