@@ -44,7 +44,12 @@
   ] ++ (if !isWork then [
     pkgs.nodejs_20
     pkgs.rustup
-  ] else [ ]);
+  ] else [
+    (pkgs.writeScriptBin "track" ''
+      git fetch origin $1:$1
+      git switch $1
+    '')
+  ]);
 
   home.shellAliases = {
     gs = "git status -sb";
