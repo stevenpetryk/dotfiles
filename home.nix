@@ -130,22 +130,9 @@
   programs.zoxide.enable = true;
   programs.zoxide.enableZshIntegration = true;
 
-  programs.ssh = if isWork then { } else {
-    enable = true;
-    package = pkgs.openssh;
-    matchBlocks = {
-      cowiemac = {
-        forwardAgent = true;
-        hostname = "100.78.79.62";
-        user = "cowie";
-        localForwards = [{
-          bind.port = 5900;
-          host.address = "localhost";
-          host.port = 5900;
-        }];
-      };
-    };
-  };
+  programs.neovim.plugins = with pkgs.vimPlugins; [
+    vim-easymotion
+  ];
 
   programs.direnv = {
     enable = true;
