@@ -29,14 +29,14 @@
       };
       # Work Mac
       homeConfigurations."steven.petryk" = createConfiguration rec {
-        system = "x86_64-darwin";
+        system = "aarch64-darwin";
         username = "steven.petryk";
         homeDirectory = "/Users/${username}";
         isWork = true;
       };
       # Work Coder
       homeConfigurations."discord" = createConfiguration rec {
-        system = "x86_64-linux";
+        system = "aarch64-darwin";
         username = "discord";
         homeDirectory = "/home/${username}";
         isWork = true;

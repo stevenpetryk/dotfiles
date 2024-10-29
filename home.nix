@@ -93,7 +93,7 @@
       . "$HOME/.cargo/env"
     '' else ""}
 
-    ${if isWork && system == "x86_64-darwin" then ''
+    ${if isWork && system == "aarch64-darwin" then ''
       source $HOME/.nix-profile/etc/profile.d/nix.sh
       export PATH="$HOME/src/discord/.local/bin:$PATH"
     '' else ""}
