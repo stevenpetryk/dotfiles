@@ -41,6 +41,10 @@
     (pkgs.writeScriptBin "cheat" ''
       curl -s "cht.sh/$1" | less -R
     '')
+
+    (pkgs.writeScriptBin "ql" ''
+      nohup qlmanage -p $1 >/dev/null 2>&1 &
+    '')
   ] ++ (if !isWork then [
     pkgs.nodejs_20
     pkgs.rustup
