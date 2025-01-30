@@ -10,6 +10,7 @@
     asciiquarium
     coreutils
     ffmpeg
+    gum
     hyperfine
     imagemagick
     lz4
@@ -17,7 +18,9 @@
     neofetch
     neovim
     nixpkgs-fmt
+    openssl
     pngquant
+    pkg-config
     pure-prompt
     ripgrep
     tig
@@ -93,12 +96,19 @@
 
     export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
 
+    export OPENSSL_DIR="${pkgs.openssl.dev}"
+    export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
+    export OPENSSL_NO_VENDOR=1
+    export OPENSSL_LIB_DIR="${pkgs.lib.getLib pkgs.openssl}/lib"
+
     ${if isWork then ''
       . "$HOME/.cargo/env"
     '' else ""}
 
     ${if isWork && system == "aarch64-darwin" then ''
-      source $HOME/.nix-profile/etc/profile.d/nix.sh
+      if [ -f "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
+        source $HOME/.nix-profile/etc/profile.d/nix.sh
+      fi
       export PATH="$HOME/src/discord/.local/bin:$PATH"
     '' else ""}
 
