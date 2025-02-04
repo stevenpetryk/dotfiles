@@ -36,7 +36,7 @@
       };
       # Work Coder
       homeConfigurations."discord" = createConfiguration rec {
-        system = "aarch64-darwin";
+        system = "x86_64-linux";
         username = "discord";
         homeDirectory = "/home/${username}";
         isWork = true;

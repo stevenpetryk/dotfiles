@@ -81,6 +81,9 @@
     VISUAL = "nvim";
   };
 
+  # Fix 403 from outdated git source
+  manual.manpages.enable = false;
+
   programs.home-manager.enable = true;
 
   programs.zsh.enable = true;
