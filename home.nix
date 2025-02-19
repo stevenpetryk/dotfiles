@@ -138,7 +138,9 @@
   programs.gh.settings.git_protocol = "ssh";
 
   programs.fzf.enable = true;
-  programs.fzf.enableZshIntegration = true;
+
+  programs.atuin.enable = true;
+  programs.atuin.enableZshIntegration = true;
 
   programs.htop.enable = true;
 
