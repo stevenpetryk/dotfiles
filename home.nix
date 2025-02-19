@@ -141,6 +141,9 @@
 
   programs.atuin.enable = true;
   programs.atuin.enableZshIntegration = true;
+  programs.atuin.flags = [
+    "--disable-up-arrow"
+  ];
 
   programs.htop.enable = true;
 
