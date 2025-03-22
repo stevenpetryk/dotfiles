@@ -2,6 +2,6 @@
 
 {
   programs.zsh.initExtra = ''
-    source ${./discord/fix-coder-ssh.sh}
+    source ${../discord/fix-coder-ssh.sh}
   '';
 }
