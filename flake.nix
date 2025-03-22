@@ -11,11 +11,15 @@
 
   outputs = { nixpkgs, home-manager, ... }:
     let
-      createConfiguration = { system, username, homeDirectory, isWork }: home-manager.lib.homeManagerConfiguration {
+      createConfiguration = { system, username, homeDirectory, extraModules }: home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.${system};
-        modules = [ ./home.nix ];
+
+        modules = [
+          ./modules/shared.nix
+        ] ++ extraModules;
+
         extraSpecialArgs = {
-          inherit system username homeDirectory isWork;
+          inherit system username homeDirectory;
         };
       };
     in
@@ -25,21 +29,21 @@
         system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
-        isWork = false;
+        extraModules = [ ./modules/personal.nix ];
       };
       # Work Mac
       homeConfigurations."steven.petryk" = createConfiguration rec {
         system = "aarch64-darwin";
         username = "steven.petryk";
         homeDirectory = "/Users/${username}";
-        isWork = true;
+        extraModules = [ ./modules/work-shared.nix ./modules/work-mac.nix ];
       };
       # Work Coder
       homeConfigurations."discord" = createConfiguration rec {
         system = "x86_64-linux";
         username = "discord";
         homeDirectory = "/home/${username}";
-        isWork = true;
+        extraModules = [ ./modules/work-shared.nix ./modules/work-coder.nix ];
       };
 
       # Ensure Coder has a home-manager flake
