@@ -4,29 +4,22 @@
   home.username = username;
   home.homeDirectory = homeDirectory;
 
-  home.stateVersion = "23.05";
+  home.stateVersion = "24.11";
 
   home.packages = with pkgs; [
-    asciiquarium
     coreutils
     ffmpeg
-    gum
     hyperfine
     imagemagick
-    lz4
     ncdu
-    neofetch
     neovim
     nixpkgs-fmt
     openssl
-    pngquant
     pkg-config
     pure-prompt
     ripgrep
     tig
-    tree
     watch
-    youtube-dl
 
     (import ./fonts/gg.nix { inherit pkgs; })
 
@@ -87,8 +80,8 @@
   programs.home-manager.enable = true;
 
   programs.zsh.enable = true;
-  programs.zsh.enableSyntaxHighlighting = true;
-  programs.zsh.enableAutosuggestions = true;
+  programs.zsh.syntaxHighlighting.enable = true;
+  programs.zsh.autosuggestion.enable = true;
   programs.zsh.autocd = true;
   programs.zsh.defaultKeymap = "emacs";
 
