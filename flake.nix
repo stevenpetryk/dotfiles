@@ -11,7 +11,7 @@
 
   outputs = { nixpkgs, home-manager, ... }:
     let
-      createConfiguration = { system, username, homeDirectory, extraModules, purpose }: home-manager.lib.homeManagerConfiguration {
+      createConfiguration = { system, username, homeDirectory, extraModules }: home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.${system};
 
         modules = [
@@ -19,7 +19,7 @@
         ] ++ extraModules;
 
         extraSpecialArgs = {
-          inherit system username homeDirectory purpose;
+          inherit system username homeDirectory;
         };
       };
     in
@@ -29,7 +29,6 @@
         system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
-        purpose = "personal";
         extraModules = [ ./modules/personal.nix ];
       };
       # Work Mac
@@ -37,7 +36,6 @@
         system = "aarch64-darwin";
         username = "steven.petryk";
         homeDirectory = "/Users/${username}";
-        purpose = "work-mac";
         extraModules = [ ./modules/work-shared.nix ./modules/work-mac.nix ];
       };
       # Work Coder
@@ -45,7 +43,6 @@
         system = "x86_64-linux";
         username = "discord";
         homeDirectory = "/home/${username}";
-        purpose = "work-coder";
         extraModules = [ ./modules/work-shared.nix ./modules/work-coder.nix ];
       };
 
