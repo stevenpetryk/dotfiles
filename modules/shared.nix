@@ -46,12 +46,8 @@
     ga = "git add -A";
     gc = "git commit";
     gd = "git diff";
-    ghpdf = "git push && gh pr create -df";
-    ghlfg = "gh pr ready && gh pr merge";
     b = "fzfbranch";
     vim = "nvim";
-    ghpdf = "git push --no-verify && gh pr create -df";
-    ghpdfv = "git push --no-verify && gh pr create -df && gh pr view -w";
   };
 
   home.sessionVariables = {

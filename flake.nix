@@ -15,7 +15,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         modules = [
-          ./shared.nix
+          ./modules/shared.nix
         ] ++ extraModules;
 
         extraSpecialArgs = {
@@ -30,7 +30,7 @@
         username = "steven";
         homeDirectory = "/Users/${username}";
         purpose = "personal";
-        extraModules = [ ./personal.nix ];
+        extraModules = [ ./modules/personal.nix ];
       };
       # Work Mac
       homeConfigurations."steven.petryk" = createConfiguration rec {
@@ -38,7 +38,7 @@
         username = "steven.petryk";
         homeDirectory = "/Users/${username}";
         purpose = "work-mac";
-        extraModules = [ ./work-shared.nix ./work-mac.nix ];
+        extraModules = [ ./modules/work-shared.nix ./modules/work-mac.nix ];
       };
       # Work Coder
       homeConfigurations."discord" = createConfiguration rec {
@@ -46,7 +46,7 @@
         username = "discord";
         homeDirectory = "/home/${username}";
         purpose = "work-coder";
-        extraModules = [ ./work-shared.nix ./work-coder.nix ];
+        extraModules = [ ./modules/work-shared.nix ./modules/work-coder.nix ];
       };
 
       # Ensure Coder has a home-manager flake
