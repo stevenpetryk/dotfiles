@@ -76,20 +76,6 @@
     export OPENSSL_LIB_DIR="${pkgs.lib.getLib pkgs.openssl}/lib"
   '';
 
-  programs.git.enable = true;
-  programs.git.delta.enable = true;
-  programs.git.extraConfig = {
-    user.name = "Steven Petryk";
-    core.editor = "nvim";
-    init.defaultBranch = "main";
-    push.default = "current";
-    push.autoSetupRemote = true;
-    branch.autosetupmerge = true;
-    fetch.prune = true;
-  };
-  programs.gh.enable = true;
-  programs.gh.settings.git_protocol = "ssh";
-
   programs.fzf.enable = true;
 
   programs.atuin.enable = true;

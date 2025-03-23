@@ -16,6 +16,7 @@
 
         modules = [
           ./modules/shared.nix
+          ./modules/programs/git.nix
         ] ++ extraModules;
 
         extraSpecialArgs = {
