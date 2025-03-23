@@ -6,5 +6,7 @@
       source $HOME/.nix-profile/etc/profile.d/nix.sh
     fi
     export PATH="$HOME/src/discord/.local/bin:$PATH"
+
+    . "$HOME/.cargo/env"
   '';
 }
