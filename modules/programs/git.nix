@@ -26,7 +26,6 @@
       push = {
         default = "simple";
         autoSetupRemote = true;
-        followTags = true;
       };
 
       fetch = {
