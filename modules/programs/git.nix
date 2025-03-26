@@ -28,11 +28,6 @@
         autoSetupRemote = true;
       };
 
-      fetch = {
-        prune = true;
-        pruneTags = true;
-      };
-
       rerere = {
         enabled = true;
         autoupdate = true;
