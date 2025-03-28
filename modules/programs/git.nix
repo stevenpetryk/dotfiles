@@ -1,12 +1,10 @@
-{ programs, ... }:
+{ programs, gitName, gitEmail, ... }:
 {
   programs.git = {
     enable = true;
 
     # Largely taken from # https://blog.gitbutler.com/how-git-core-devs-configure-git/
     extraConfig = {
-      user.name = "Steven Petryk";
-
       column.ui = "auto";
       branch.sort = "-committerdate";
       tag.sort = "version:refname";

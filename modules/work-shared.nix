@@ -17,8 +17,4 @@
     ghpdf = "git push --no-verify && gh pr create -df";
     ghpdfv = "ghpdf && gh pr view -w";
   };
-
-  programs.git.extraConfig = {
-    user.email = "steven.petryk@discordapp.com";
-  };
 }
