@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 
+# Avoid bullshit home manager conflicts that never seem to end
+rm /home/discord/.local/state/nix/profiles/home-manager*
+rm /home/discord/.local/state/home-manager/gcroots/current-home
+
 nix run .#home-manager -- switch --flake . -b personalize-backup
