@@ -30,14 +30,14 @@
         system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
-        extraModules = [ ./modules/personal.nix ];
+        extraModules = [ ./modules/personal.nix ./modules/mac-shared.nix ];
       };
       # Work Mac
       homeConfigurations."steven.petryk" = createConfiguration rec {
         system = "aarch64-darwin";
         username = "steven.petryk";
         homeDirectory = "/Users/${username}";
-        extraModules = [ ./modules/work-shared.nix ./modules/work-mac.nix ];
+        extraModules = [ ./modules/work-shared.nix ./modules/mac-shared.nix ./modules/work-mac.nix ];
       };
       # Work Coder
       homeConfigurations."discord" = createConfiguration rec {
