@@ -4,6 +4,8 @@
   home.packages = with pkgs; [
     pkgs.nodejs_20
     pkgs.rustup
+    pkgs.python312
+    pkgs.uv
   ];
 
   home.shellAliases = {
