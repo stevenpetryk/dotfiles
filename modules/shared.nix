@@ -15,7 +15,6 @@
     neovim
     nixpkgs-fmt
     openssl
-    pkg-config
     pure-prompt
     ripgrep
     tig
