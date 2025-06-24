@@ -15,7 +15,6 @@
     neovim
     nixpkgs-fmt
     openssl
-    pure-prompt
     ripgrep
     tig
     watch
@@ -63,10 +62,6 @@
   programs.zsh.defaultKeymap = "emacs";
 
   programs.zsh.initExtra = ''
-    fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
-    autoload -U promptinit; promptinit
-    prompt pure
-
     export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
 
     export OPENSSL_DIR="${pkgs.openssl.dev}"
@@ -82,6 +77,12 @@
   programs.atuin.flags = [
     "--disable-up-arrow"
   ];
+
+  programs.starship.enable = true;
+  programs.starship.enableZshIntegration = true;
+  home.file.".config/starship.toml" = {
+    source = ./programs/starship.toml;
+  };
 
   programs.htop.enable = true;
 
