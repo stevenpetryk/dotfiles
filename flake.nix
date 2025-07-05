@@ -32,6 +32,13 @@
         homeDirectory = "/Users/${username}";
         extraModules = [ ./modules/personal.nix ./modules/mac-shared.nix ];
       };
+      # NixOS machine
+      homeConfigurations."gigante" = createConfiguration rec {
+        system = "x86_64-linux";
+        username = "steven";
+        homeDirectory = "/home/${username}";
+        extraModules = [ ./modules/personal.nix ];
+      };
       # Work Mac
       homeConfigurations."steven.petryk" = createConfiguration rec {
         system = "aarch64-darwin";
@@ -49,6 +56,12 @@
 
       # Ensure Coder has a home-manager flake
       apps.x86_64-linux.home-manager = {
+        type = "app";
+        program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
+      };
+
+      # Ensure Coder has a home-manager flake
+      apps.x86_64-linux.gigante = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
       };
