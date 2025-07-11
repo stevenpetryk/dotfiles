@@ -5,6 +5,7 @@ rec {
     [
       ./hardware-configuration.nix
       ./cachix.nix
+      ../modules/virtual-display.nix
     ];
 
   system.stateVersion = "25.05"; # See https://nixos.org/nixos/options.html
@@ -20,6 +21,11 @@ rec {
       home-manager
     ];
     shell = pkgs.zsh;
+  };
+
+  services.displayManager = {
+    autoLogin.enable = true;
+    autoLogin.user = "steven";
   };
 
   # Shell setup - we use Home Manager's ZSH
@@ -60,7 +66,7 @@ rec {
 
   # SSH
   services.openssh.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 22 ];
 
   # LAN
   services.tailscale.enable = true;
@@ -69,11 +75,11 @@ rec {
   programs.nix-ld.enable = true;
 
   # AI
-  services.ollama.enable = true;
-  services.ollama.acceleration = "cuda";
-  services.open-webui.enable = true;
-  services.open-webui.port = 8080;
-  services.open-webui.openFirewall = true;
+  # services.ollama.enable = true;
+  # services.ollama.acceleration = "cuda";
+  # services.open-webui.enable = true;
+  # services.open-webui.port = 8080;
+  # services.open-webui.openFirewall = true;
 
   # Gaming
   programs.steam.enable = true;
@@ -84,6 +90,13 @@ rec {
   services.sunshine.enable = true;
   services.sunshine.openFirewall = true;
   services.sunshine.capSysAdmin = true;
+
+  # Virtual display
+  # hardware.display.virtual.enable = false;
+  # hardware.display.virtual.edidBinary = ./virtual-display-4k.bin;
+  # hardware.display.virtual.resolution = "3840x2160";
+  # hardware.display.virtual.refreshRate = 60;
+  # hardware.display.virtual.connector = "HDMI-A-1";
 
   #
   # Homelab-adjacent stuff
@@ -164,6 +177,10 @@ rec {
 
   # GPU
   hardware.nvidia.open = true;
+  hardware.graphics.enable = true;
+  hardware.nvidia.modesetting.enable = true;
+  hardware.nvidia.powerManagement.enable = true;
+  hardware.nvidia.nvidiaSettings = true;
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
   services.xserver.videoDrivers = [ "nvidia" ];
@@ -210,13 +227,15 @@ rec {
       ExecStart = "${pkgs.writeShellScript "set-rgb" ''
         #!${pkgs.runtimeShell}
 
-        # Turn off AIO liquid cooler lighting
-        ${pkgs.liquidctl}/bin/liquidctl set lcd screen brightness 0
-        ${pkgs.liquidctl}/bin/liquidctl set external color fixed 000000
+	sleep 10
 
         # Turn off all motherboard, GPU, and RAM lighting
         ${services.hardware.openrgb.package}/bin/openrgb -c 000000
         ${services.hardware.openrgb.package}/bin/openrgb --mode Off
+
+        # Turn off AIO liquid cooler lighting
+        ${pkgs.liquidctl}/bin/liquidctl set lcd screen brightness 0
+        ${pkgs.liquidctl}/bin/liquidctl set external color fixed 000000
       ''}";
       RemainAfterExit = true;
     };
