@@ -23,10 +23,10 @@ rec {
     shell = pkgs.zsh;
   };
 
-  # services.displayManager = {
-  #   autoLogin.enable = true;
-  #   autoLogin.user = "steven";
-  # };
+  services.displayManager = {
+    autoLogin.enable = true;
+    autoLogin.user = "steven";
+  };
 
   # Shell setup - we use Home Manager's ZSH
   programs.zsh.enable = true;
