@@ -69,7 +69,6 @@ rec {
 
   # SSH
   services.openssh.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
 
   # LAN
   services.tailscale.enable = true;
