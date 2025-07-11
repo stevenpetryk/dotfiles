@@ -23,10 +23,10 @@ rec {
     shell = pkgs.zsh;
   };
 
-  services.displayManager = {
-    autoLogin.enable = true;
-    autoLogin.user = "steven";
-  };
+  # services.displayManager = {
+  #   autoLogin.enable = true;
+  #   autoLogin.user = "steven";
+  # };
 
   # Shell setup - we use Home Manager's ZSH
   programs.zsh.enable = true;
@@ -56,6 +56,9 @@ rec {
     # General
     discord
     spotify
+
+    # Display control
+    ddcutil # For manual brightness control via DDC/CI
 
     # LED control that OpenRGB doesn't manage
     liquidctl
@@ -176,7 +179,7 @@ rec {
   hardware.i2c.enable = true;
 
   # GPU
-  hardware.nvidia.open = true;
+  hardware.nvidia.open = false; # Use proprietary driver to avoid pageflip timeout bug
   hardware.graphics.enable = true;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.powerManagement.enable = true;
@@ -184,6 +187,15 @@ rec {
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
   services.xserver.videoDrivers = [ "nvidia" ];
+
+  # Wayland-specific NVIDIA workarounds
+  environment.variables = {
+    # Force NVIDIA to use the proprietary driver for Wayland
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    # Disable hardware cursors which can cause pageflip issues
+    WLR_NO_HARDWARE_CURSORS = "1";
+  };
 
   #
   # LED control
@@ -196,7 +208,7 @@ rec {
     src = pkgs.fetchFromGitLab {
       owner = "CalcProgrammer1";
       repo = "OpenRGB";
-      rev = "26a0b889375a2063c0f7837606c0d4d82c230171";
+      rev = "3cbc4e5570826cb0186592c036d466fccf304804";
       sha256 = "sha256-nQU2OQm0tHKdZZ2uKEbCdZxdR6IUPeW8ViojWr/YUEE=";
     };
     # The postPatch in nixpkgs is meant for v0.9 of OpenRGB, but the upstream is
@@ -214,7 +226,13 @@ rec {
   systemd.services.openrgb.wants = [ "dev-usb.device" ];
 
   # Allow OpenRGB to see T-Force RAM (which is an SMBus device)
-  boot.kernelParams = [ "acpi_enforce_resources=lax" ];
+  # Also add NVIDIA workarounds for RTX 4080 pageflip timeout issues
+  boot.kernelParams = [
+    "acpi_enforce_resources=lax"
+    "nvidia-drm.modeset=1"
+    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+    "nvidia.NVreg_UsePageAttributeTable=1"
+  ];
 
   systemd.services.set-rgb = {
     description = "Disable RGB LEDs";
@@ -227,7 +245,7 @@ rec {
       ExecStart = "${pkgs.writeShellScript "set-rgb" ''
         #!${pkgs.runtimeShell}
 
-	sleep 10
+        sleep 10
 
         # Turn off all motherboard, GPU, and RAM lighting
         ${services.hardware.openrgb.package}/bin/openrgb -c 000000
