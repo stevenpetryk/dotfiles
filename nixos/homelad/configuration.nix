@@ -78,6 +78,20 @@
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
 
+  # User systemd services
+  systemd.user.services.keen-mind-recorder = {
+    description = "Keen Mind Recorder Bot";
+    after = [ "network.target" ];
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "simple";
+      WorkingDirectory = "/home/steven/src/keen-mind/recorder_bot";
+      ExecStart = "${pkgs.nix}/bin/nix-shell -p nodejs_24 -p python312 --command \"corepack pnpm start\"";
+      Restart = "always";
+      RestartSec = "10";
+    };
+  };
+
   system.stateVersion = "24.05";
 
   time.timeZone = "America/Los_Angeles";
