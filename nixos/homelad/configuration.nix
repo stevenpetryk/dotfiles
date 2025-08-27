@@ -78,13 +78,19 @@
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
 
-  # User systemd services
-  systemd.user.services.keen-mind-recorder = {
-    description = "Keen Mind Recorder Bot";
+  # System systemd services
+  systemd.services.keen-mind = {
+    description = "Keen Mind Discord Bot";
     after = [ "network.target" ];
-    wantedBy = [ "default.target" ];
+    wantedBy = [ "multi-user.target" ];
+    environment = {
+      # This is a bit of a hack; I'd love to not need that.
+      NIX_PATH = "/home/steven/.nix-defexpr/channels:nixos-config=/home/steven/dotfiles/nixos/homelad/configuration.nix:nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos:/nix/var/nix/profiles/per-user/root/channels";
+    };
     serviceConfig = {
       Type = "simple";
+      User = "steven";
+      Group = "users";
       WorkingDirectory = "/home/steven/src/keen-mind/recorder_bot";
       ExecStart = "${pkgs.nix}/bin/nix-shell -p nodejs_24 -p python312 --command \"corepack pnpm start\"";
       Restart = "always";
