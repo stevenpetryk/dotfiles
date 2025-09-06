@@ -78,21 +78,49 @@
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
 
-  # System systemd services
+  # Keen Mind Discord Bot
   systemd.services.keen-mind = {
     description = "Keen Mind Discord Bot";
     after = [ "network.target" ];
     wantedBy = [ "multi-user.target" ];
+
+    path = with pkgs; [ nodejs_24 python312 pnpm ];
+
     environment = {
-      # This is a bit of a hack; I'd love to not need that.
-      NIX_PATH = "/home/steven/.nix-defexpr/channels:nixos-config=/home/steven/dotfiles/nixos/homelad/configuration.nix:nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos:/nix/var/nix/profiles/per-user/root/channels";
+      KEEN_MIND_DATA_DIR = "/var/lib/keen-mind/recordings";
+      KEEN_MIND_CACHE_DIR = "/var/cache/keen-mind";
+      KEEN_MIND_RUNTIME_DIR = "/run/keen-mind";
     };
+
     serviceConfig = {
       Type = "simple";
       User = "steven";
       Group = "users";
-      WorkingDirectory = "/home/steven/src/keen-mind/recorder_bot";
-      ExecStart = "${pkgs.nix}/bin/nix-shell -p nodejs_24 -p python312 --command \"corepack pnpm start\"";
+
+      WorkingDirectory = "/srv/keen-mind/recorder_bot";
+
+      # Create FHS dirs with correct perms
+      StateDirectory = "keen-mind/recordings";
+      CacheDirectory = "keen-mind";
+      LogsDirectory = "keen-mind";
+      RuntimeDirectory = "keen-mind";
+      StateDirectoryMode = "0700";
+
+      # Sandboxing: keep /home hidden; OS read-only
+      ProtectHome = "yes";
+      ProtectSystem = "strict";
+
+      # Allow read of the repo; allow writes only to these dirs
+      ReadOnlyPaths = [ "/srv/keen-mind" ];
+      ReadWritePaths = [
+        "/var/lib/keen-mind"
+        "/var/cache/keen-mind"
+        "/var/log/keen-mind"
+        "/run/keen-mind"
+      ];
+      UMask = "0077";
+
+      ExecStart = "${pkgs.nodejs_24}/bin/node --experimental-strip-types --env-file=../.env ./src/index.ts";
       Restart = "always";
       RestartSec = "10";
     };
