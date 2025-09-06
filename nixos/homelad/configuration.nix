@@ -7,6 +7,7 @@
   imports = [
     # Include the default lxc/lxd configuration.
     "${modulesPath}/virtualisation/lxc-container.nix"
+    ./modules/keen-mind.nix
   ];
 
   networking.hostName = "homelad";
@@ -78,53 +79,6 @@
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
 
-  # Keen Mind Discord Bot
-  systemd.services.keen-mind = {
-    description = "Keen Mind Discord Bot";
-    after = [ "network.target" ];
-    wantedBy = [ "multi-user.target" ];
-
-    path = with pkgs; [ nodejs_24 python312 pnpm ];
-
-    environment = {
-      KEEN_MIND_DATA_DIR = "/var/lib/keen-mind/recordings";
-      KEEN_MIND_CACHE_DIR = "/var/cache/keen-mind";
-      KEEN_MIND_RUNTIME_DIR = "/run/keen-mind";
-    };
-
-    serviceConfig = {
-      Type = "simple";
-      User = "steven";
-      Group = "users";
-
-      WorkingDirectory = "/srv/keen-mind/recorder_bot";
-
-      # Create FHS dirs with correct perms
-      StateDirectory = "keen-mind/recordings";
-      CacheDirectory = "keen-mind";
-      LogsDirectory = "keen-mind";
-      RuntimeDirectory = "keen-mind";
-      StateDirectoryMode = "0700";
-
-      # Sandboxing: keep /home hidden; OS read-only
-      ProtectHome = "yes";
-      ProtectSystem = "strict";
-
-      # Allow read of the repo; allow writes only to these dirs
-      ReadOnlyPaths = [ "/srv/keen-mind" ];
-      ReadWritePaths = [
-        "/var/lib/keen-mind"
-        "/var/cache/keen-mind"
-        "/var/log/keen-mind"
-        "/run/keen-mind"
-      ];
-      UMask = "0077";
-
-      ExecStart = "${pkgs.nodejs_24}/bin/node --experimental-strip-types --env-file=../.env ./src/index.ts";
-      Restart = "always";
-      RestartSec = "10";
-    };
-  };
 
   system.stateVersion = "24.05";
 
