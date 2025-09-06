@@ -2,7 +2,7 @@
 
 {
   home.packages = with pkgs; [
-    pkgs.nodejs_20
+    pkgs.nodejs_22
     pkgs.rustup
     pkgs.python312
     pkgs.uv
