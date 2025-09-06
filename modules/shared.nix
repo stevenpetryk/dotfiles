@@ -68,6 +68,7 @@
     prompt pure
 
     export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
+    export PATH="$HOME/.local/bin:$PATH"
 
     export OPENSSL_DIR="${pkgs.openssl.dev}"
     export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
