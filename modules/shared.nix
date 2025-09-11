@@ -45,6 +45,7 @@
     ga = "git add -A";
     gc = "git commit";
     gd = "git diff";
+    ghw = "gh pr view --web";
     b = "fzfbranch";
     vim = "nvim";
   };
