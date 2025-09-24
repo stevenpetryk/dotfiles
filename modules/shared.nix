@@ -68,7 +68,6 @@
     autoload -U promptinit; promptinit
     prompt pure
 
-    export PATH="$HOME/Library/pnpm/global/5/node_modules/.bin:$PATH"
     export PATH="$HOME/.local/bin:$PATH"
 
     export OPENSSL_DIR="${pkgs.openssl.dev}"
