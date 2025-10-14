@@ -8,11 +8,21 @@
     # Include the default lxc/lxd configuration.
     "${modulesPath}/virtualisation/lxc-container.nix"
     ./modules/keen-mind.nix
+    ./cachix.nix
   ];
 
   networking.hostName = "homelad";
 
+  # Graphics
+  hardware.graphics.enable = true;
+  services.xserver.videoDrivers = ["nvidia"];
+  hardware.nvidia.open = true;
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.production;
+  hardware.nvidia.nvidiaSettings = true;
+  hardware.nvidia.modesetting.enable = true;
+
   # Nix
+  nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.nixPath = [
     "nixos-config=/home/steven/dotfiles/nixos/homelad/configuration.nix"
