@@ -11,6 +11,7 @@
   home.shellAliases = {
     ghpdf = "git push && gh pr create -df";
     ghlfg = "gh pr ready && gh pr merge";
+    keen-mind = "~/src/keen-mind/keen-mind";
   };
 
   programs.git.extraConfig = {

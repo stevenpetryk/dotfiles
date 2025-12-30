@@ -36,7 +36,10 @@
     neovim
     neofetch
     git
+    rsync
   ];
+
+  programs.direnv.enable = true;
 
   # Allow SSH access
   services.openssh = {
@@ -48,12 +51,15 @@
     };
   };
 
+  programs.zsh.enable = true;
+
   users = {
     mutableUsers = false;
     users.steven = {
       isNormalUser = true;
       hashedPassword = "!";
       extraGroups = ["wheel"];
+      shell = pkgs.zsh;
       openssh.authorizedKeys.keys = [
         # Sync with https://github.com/stevenpetryk.keys
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA8MKWpnZktvAr8y1IKj2xXcHE+3/lLUPKvuFgBkhS0"

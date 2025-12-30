@@ -11,7 +11,7 @@
 
   outputs = { nixpkgs, home-manager, ... }:
     let
-      createConfiguration = { system, username, homeDirectory, extraModules }: home-manager.lib.homeManagerConfiguration {
+      createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules }: home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.${system};
 
         modules = [
@@ -20,53 +20,41 @@
         ] ++ extraModules;
 
         extraSpecialArgs = {
-          inherit system username homeDirectory;
+          inherit system username homeDirectory dotfilesPath;
         };
       };
     in
     {
-      # Personal
-      homeConfigurations."steven" = createConfiguration rec {
+      # Personal Mac
+      homeConfigurations."steven@stevens-mbp-14" = createConfiguration rec {
         system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
+        dotfilesPath = "${homeDirectory}/dotfiles";
         extraModules = [ ./modules/personal.nix ./modules/mac-shared.nix ];
       };
-      # NixOS machine
-      homeConfigurations."gigante" = createConfiguration rec {
+      # Gigante NixOS
+      homeConfigurations."steven@gigante" = createConfiguration rec {
         system = "x86_64-linux";
         username = "steven";
         homeDirectory = "/home/${username}";
+        dotfilesPath = "${homeDirectory}/dotfiles";
         extraModules = [ ./modules/personal.nix ];
       };
-      # Work Mac
-      homeConfigurations."steven.petryk" = createConfiguration rec {
-        system = "aarch64-darwin";
-        username = "steven.petryk";
-        homeDirectory = "/Users/${username}";
-        extraModules = [ ./modules/work-shared.nix ./modules/mac-shared.nix ./modules/work-mac.nix ];
-      };
-      # Work Coder
-      homeConfigurations."discord" = createConfiguration rec {
+      # Homelad NixOS LXC
+      homeConfigurations."steven@homelad" = createConfiguration rec {
         system = "x86_64-linux";
-        username = "discord";
+        username = "steven";
         homeDirectory = "/home/${username}";
-        extraModules = [ ./modules/work-shared.nix ./modules/work-coder.nix ];
+        dotfilesPath = "${homeDirectory}/dotfiles";
+        extraModules = [ ./modules/personal.nix ];
       };
 
-      # Ensure Coder has a home-manager flake
       apps.x86_64-linux.home-manager = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
       };
 
-      # Ensure Coder has a home-manager flake
-      apps.x86_64-linux.gigante = {
-        type = "app";
-        program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
-      };
-
-      # Manage personal system with flakes too
       apps.aarch64-darwin.home-manager = {
         type = "app";
         program = "${nixpkgs.legacyPackages.aarch64-darwin.home-manager}/bin/home-manager";

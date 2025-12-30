@@ -8,8 +8,9 @@
     wantedBy = [ "multi-user.target" ];
 
     environment = {
-      NIX_PATH = "nixpkgs=${pkgs.path}";
       HOME = "/home/steven";
+      # Required for nix-build in agent.ts which uses <nixpkgs>
+      NIX_PATH = "nixpkgs=${pkgs.path}";
     };
 
     serviceConfig = {
@@ -27,7 +28,7 @@
         "/tmp"
       ];
 
-      ExecStart = "${pkgs.nix}/bin/nix-shell /home/steven/src/keen-mind/shell.nix --command \"corepack pnpm run -s cli bot\"";
+      ExecStart = "${pkgs.nix}/bin/nix develop /home/steven/src/keen-mind --command bun run cli bot";
       Restart = "always";
       RestartSec = "10";
     };

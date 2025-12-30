@@ -1,4 +1,4 @@
-{ config, pkgs, system, username, homeDirectory, isWork, ... }:
+{ config, pkgs, system, username, homeDirectory, dotfilesPath, ... }:
 
 {
   home.username = username;
@@ -68,7 +68,7 @@
     autoload -U promptinit; promptinit
     prompt pure
 
-    export PATH="$HOME/.local/bin:$PATH"
+    export PATH="${dotfilesPath}/bin:$HOME/.local/bin:$PATH"
 
     export OPENSSL_DIR="${pkgs.openssl.dev}"
     export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
