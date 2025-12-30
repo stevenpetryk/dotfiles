@@ -30,7 +30,7 @@
         system = "aarch64-darwin";
         username = "steven";
         homeDirectory = "/Users/${username}";
-        dotfilesPath = "${homeDirectory}/dotfiles";
+        dotfilesPath = "${homeDirectory}/.config/home-manager";
         extraModules = [ ./modules/personal.nix ./modules/mac-shared.nix ];
       };
       # Gigante NixOS
