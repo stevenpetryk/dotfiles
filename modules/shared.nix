@@ -17,8 +17,10 @@
     openssl
     pure-prompt
     ripgrep
+    rsync
     tig
     watch
+    watchman
 
     (pkgs.writeScriptBin "fzfbranch" ''
       git branch --sort=-committerdate --format="%(refname:short)" |

@@ -17,6 +17,7 @@
         modules = [
           ./modules/shared.nix
           ./modules/programs/git.nix
+          ./modules/programs/slync.nix
         ] ++ extraModules;
 
         extraSpecialArgs = {
