@@ -4,51 +4,68 @@
   home.packages = [
     (pkgs.writeShellApplication {
       name = "slync";
-      runtimeInputs = [ pkgs.docopts pkgs.watchman pkgs.rsync pkgs.git pkgs.jq ];
+      runtimeInputs = [ pkgs.docopts pkgs.fswatch pkgs.rsync pkgs.git ];
       text = ''
-        # slync - Watchman-based file synchronizer
+        # slync - fswatch-based file synchronizer
         #
         # Usage:
         #   slync start <remote> [<remote_path>]
         #   slync stop [<remote>]
         #   slync list
+        #   slync logs
         #   slync -h | --help
         #
         # Commands:
         #   start     Start syncing current directory to remote
         #   stop      Stop syncing (specific remote or all)
         #   list      List active sync sessions
+        #   logs      Tail logs for current directory's sync
         #
         # Arguments:
         #   <remote>       Remote host (e.g., user@host)
         #   <remote_path>  Remote path (defaults to current directory path)
 
         STATE_DIR="''${HOME}/.local/state/slync"
-        mkdir -p "$STATE_DIR"
+        LOG_DIR="$STATE_DIR/logs"
+        mkdir -p "$STATE_DIR" "$LOG_DIR"
 
         do_sync() {
           local remote="$1"
           local remote_path="$2"
           local src_dir="$3"
+          local log_file="$4"
 
-          rsync -az --delete \
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Syncing to $remote:$remote_path" >> "$log_file"
+          if rsync -az \
             --filter=':- .gitignore' \
             --filter='- .git/' \
-            "$src_dir/" "$remote:$remote_path/"
+            "$src_dir/" "$remote:$remote_path/" >> "$log_file" 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Sync completed" >> "$log_file"
+          else
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Sync failed with exit code $?" >> "$log_file"
+          fi
         }
 
         sync_loop() {
           local remote="$1"
           local remote_path="$2"
           local src_dir="$3"
+          local log_file="$4"
+
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting sync loop for $src_dir -> $remote:$remote_path" >> "$log_file"
 
           # Initial sync
-          do_sync "$remote" "$remote_path" "$src_dir"
+          do_sync "$remote" "$remote_path" "$src_dir" "$log_file"
 
-          # Watch for changes and sync
-          while watchman-wait "$src_dir" > /dev/null 2>&1; do
-            do_sync "$remote" "$remote_path" "$src_dir"
+          # Watch for changes and sync using fswatch
+          # -1 = exit after first event, --latency=0.5 = batch events within 500ms
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for changes..." >> "$log_file"
+          while fswatch -1 --latency=0.5 --exclude='\.git' "$src_dir" >> "$log_file" 2>&1; do
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Change detected" >> "$log_file"
+            do_sync "$remote" "$remote_path" "$src_dir" "$log_file"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for changes..." >> "$log_file"
           done
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] fswatch exited, sync loop ending" >> "$log_file"
         }
 
         cmd_start() {
@@ -65,23 +82,23 @@
           watch_name="$(echo "$src_dir" | tr '/' '_')"
           local pid_file="$STATE_DIR/$watch_name.pid"
           local info_file="$STATE_DIR/$watch_name.info"
+          local log_file="$LOG_DIR/$watch_name.log"
 
           if [[ -f "$pid_file" ]] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
             echo "Already syncing $src_dir"
             exit 1
           fi
 
-          # Start watchman watch on the directory
-          watchman watch "$src_dir" > /dev/null
-
-          # Start sync loop in background
-          sync_loop "$remote" "$remote_path" "$src_dir" &
+          # Start sync loop in background with nohup, preserving PATH for nix binaries
+          nohup bash -c "export PATH='$PATH'; $(declare -f do_sync sync_loop); sync_loop '$remote' '$remote_path' '$src_dir' '$log_file'" </dev/null >> "$log_file" 2>&1 &
           local pid=$!
+          disown "$pid"
 
           echo "$pid" > "$pid_file"
           echo "$src_dir -> $remote:$remote_path" > "$info_file"
 
           echo "Started syncing $src_dir -> $remote:$remote_path (pid: $pid)"
+          echo "Logs: $log_file"
         }
 
         cmd_stop() {
@@ -102,7 +119,6 @@
                 echo "Stopped sync (pid: $pid)"
               fi
               rm -f "$pid_file" "$STATE_DIR/$watch_name.info"
-              watchman watch-del "$src_dir" > /dev/null 2>&1 || true
             else
               echo "No active sync for $src_dir"
             fi
@@ -119,10 +135,6 @@
               rm -f "$pid_file"
             done
             rm -f "$STATE_DIR"/*.info
-            # Clean up all watchman watches for slync
-            watchman watch-list | jq -r '.roots[]' 2>/dev/null | while read -r dir; do
-              watchman watch-del "$dir" > /dev/null 2>&1 || true
-            done
             echo "Stopped all syncs"
           fi
         }
@@ -149,19 +161,36 @@
           fi
         }
 
+        cmd_logs() {
+          local src_dir
+          src_dir="$(pwd)"
+          local watch_name
+          watch_name="$(echo "$src_dir" | tr '/' '_')"
+          local log_file="$LOG_DIR/$watch_name.log"
+
+          if [[ -f "$log_file" ]]; then
+            tail -f "$log_file"
+          else
+            echo "No logs found for $src_dir"
+            exit 1
+          fi
+        }
+
         eval "$(docopts -h - : "$@" <<EOF
-        slync - Watchman-based file synchronizer
+        slync - fswatch-based file synchronizer
 
         Usage:
           slync start <remote> [<remote_path>]
           slync stop [<remote>]
           slync list
+          slync logs
           slync -h | --help
 
         Commands:
           start     Start syncing current directory to remote
           stop      Stop syncing (specific remote or all)
           list      List active sync sessions
+          logs      Tail logs for current directory's sync
 
         Arguments:
           <remote>       Remote host (e.g., user@host)
@@ -176,6 +205,8 @@
           cmd_stop "$remote"
         elif [[ "$list" == "true" ]]; then
           cmd_list
+        elif [[ "$logs" == "true" ]]; then
+          cmd_logs
         fi
       '';
     })
