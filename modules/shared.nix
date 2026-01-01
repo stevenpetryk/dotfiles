@@ -21,6 +21,7 @@
     tig
     watch
     watchman
+    python312Packages.pywatchman
 
     (pkgs.writeScriptBin "fzfbranch" ''
       git branch --sort=-committerdate --format="%(refname:short)" |
@@ -65,7 +66,7 @@
   programs.zsh.autocd = true;
   programs.zsh.defaultKeymap = "emacs";
 
-  programs.zsh.initExtra = ''
+  programs.zsh.initContent = ''
     fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
     autoload -U promptinit; promptinit
     prompt pure

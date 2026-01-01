@@ -14,7 +14,7 @@
     keen-mind = "~/src/keen-mind/keen-mind";
   };
 
-  programs.git.extraConfig = {
+  programs.git.settings = {
     user.email = "petryk.steven@gmail.com";
     fetch.all = true;
   };

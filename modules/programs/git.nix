@@ -4,7 +4,7 @@
     enable = true;
 
     # Largely taken from # https://blog.gitbutler.com/how-git-core-devs-configure-git/
-    extraConfig = {
+    settings = {
       column.ui = "auto";
       branch.sort = "-committerdate";
       tag.sort = "version:refname";
@@ -37,15 +37,16 @@
         updateRefs = true;
       };
     };
+  };
 
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        dark = true;
-        theme = "GitHub";
-        hyperlinks-file-link-format = "cursor://file/{path}:{line}";
-      };
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      dark = true;
+      theme = "GitHub";
+      hyperlinks-file-link-format = "vscode://file/{path}:{line}";
     };
   };
 
