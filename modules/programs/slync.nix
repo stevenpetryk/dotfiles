@@ -4,9 +4,9 @@
   home.packages = [
     (pkgs.writeShellApplication {
       name = "slync";
-      runtimeInputs = [ pkgs.docopts pkgs.fswatch pkgs.rsync pkgs.git ];
+      runtimeInputs = [ pkgs.docopts pkgs.watchman pkgs.rsync pkgs.git ];
       text = ''
-        # slync - fswatch-based file synchronizer
+        # slync - watchman-based file synchronizer
         #
         # Usage:
         #   slync start <remote> [<remote_path>]
@@ -54,18 +54,20 @@
 
           echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting sync loop for $src_dir -> $remote:$remote_path" >> "$log_file"
 
+          # Set up watchman watch
+          watchman watch "$src_dir" >> "$log_file" 2>&1
+
           # Initial sync
           do_sync "$remote" "$remote_path" "$src_dir" "$log_file"
 
-          # Watch for changes and sync using fswatch
-          # -1 = exit after first event, --latency=0.5 = batch events within 500ms
+          # Watch for changes using watchman-wait
           echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for changes..." >> "$log_file"
-          while fswatch -1 --latency=0.5 --exclude='\.git' "$src_dir" >> "$log_file" 2>&1; do
+          while watchman-wait "$src_dir" >> "$log_file" 2>&1; do
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Change detected" >> "$log_file"
             do_sync "$remote" "$remote_path" "$src_dir" "$log_file"
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for changes..." >> "$log_file"
           done
-          echo "[$(date '+%Y-%m-%d %H:%M:%S')] fswatch exited, sync loop ending" >> "$log_file"
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] watchman-wait exited, sync loop ending" >> "$log_file"
         }
 
         cmd_start() {
@@ -119,6 +121,7 @@
                 echo "Stopped sync (pid: $pid)"
               fi
               rm -f "$pid_file" "$STATE_DIR/$watch_name.info"
+              watchman watch-del "$src_dir" > /dev/null 2>&1 || true
             else
               echo "No active sync for $src_dir"
             fi
@@ -135,6 +138,7 @@
               rm -f "$pid_file"
             done
             rm -f "$STATE_DIR"/*.info
+            watchman watch-del-all > /dev/null 2>&1 || true
             echo "Stopped all syncs"
           fi
         }
@@ -177,7 +181,7 @@
         }
 
         eval "$(docopts -h - : "$@" <<EOF
-        slync - fswatch-based file synchronizer
+        slync - watchman-based file synchronizer
 
         Usage:
           slync start <remote> [<remote_path>]
