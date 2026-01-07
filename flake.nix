@@ -2,17 +2,18 @@
   description = "My dotfiles";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
     };
   };
 
-  outputs = { nixpkgs, home-manager, ... }:
+  outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, ... }:
     let
-      createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules }: home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
+      createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules, pkgs }: home-manager.lib.homeManagerConfiguration {
+        pkgs = pkgs.legacyPackages.${system};
 
         modules = [
           ./modules/shared.nix
@@ -33,6 +34,7 @@
         homeDirectory = "/Users/${username}";
         dotfilesPath = "${homeDirectory}/.config/home-manager";
         extraModules = [ ./modules/personal.nix ./modules/mac-shared.nix ];
+        pkgs = nixpkgs-stable;
       };
       # Gigante NixOS
       homeConfigurations."steven@gigante" = createConfiguration rec {
@@ -41,24 +43,26 @@
         homeDirectory = "/home/${username}";
         dotfilesPath = "${homeDirectory}/dotfiles";
         extraModules = [ ./modules/personal.nix ];
+        pkgs = nixpkgs-stable;
       };
-      # Homelad NixOS LXC
+      # Homelad NixOS LXC - uses unstable to support the Proxmox host's newer NVIDIA kernel driver
       homeConfigurations."steven@homelad" = createConfiguration rec {
         system = "x86_64-linux";
         username = "steven";
         homeDirectory = "/home/${username}";
         dotfilesPath = "${homeDirectory}/dotfiles";
         extraModules = [ ./modules/personal.nix ];
+        pkgs = nixpkgs-unstable;
       };
 
       apps.x86_64-linux.home-manager = {
         type = "app";
-        program = "${nixpkgs.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
+        program = "${nixpkgs-stable.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
       };
 
       apps.aarch64-darwin.home-manager = {
         type = "app";
-        program = "${nixpkgs.legacyPackages.aarch64-darwin.home-manager}/bin/home-manager";
+        program = "${nixpkgs-stable.legacyPackages.aarch64-darwin.home-manager}/bin/home-manager";
       };
     };
 }
