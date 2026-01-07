@@ -22,6 +22,11 @@ rec {
     shell = pkgs.zsh;
   };
 
+  security.sudo.extraRules = [{
+    users = [ "steven" ];
+    commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
+  }];
+
   services.displayManager = {
     autoLogin.enable = true;
     autoLogin.user = "steven";
@@ -167,9 +172,6 @@ rec {
   # Bluetooth
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
-
-  # Make LG UltraFine display dimmable
-  hardware.i2c.enable = true;
 
   # GPU
   hardware.nvidia.open = false; # Use proprietary driver to avoid pageflip timeout bug
