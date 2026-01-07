@@ -92,6 +92,7 @@ rec {
   services.sunshine.enable = true;
   services.sunshine.openFirewall = true;
   services.sunshine.capSysAdmin = true;
+  services.sunshine.package = pkgs.sunshine.override { cudaSupport = true; };
 
   # Virtual display
   # hardware.display.virtual.enable = false;
