@@ -1,5 +1,8 @@
 { config, pkgs, system, username, homeDirectory, dotfilesPath, ... }:
 
+let
+  clipboardCmd = if pkgs.stdenv.isDarwin then "pbcopy" else "${pkgs.wl-clipboard}/bin/wl-copy";
+in
 {
   home.username = username;
   home.homeDirectory = homeDirectory;
@@ -8,9 +11,12 @@
 
   home.packages = with pkgs; [
     coreutils
+    eza
+    fd
     ffmpeg
     hyperfine
     imagemagick
+    jq
     ncdu
     neovim
     nixpkgs-fmt
@@ -18,7 +24,9 @@
     pure-prompt
     ripgrep
     rsync
+    sd
     tig
+    tldr
     watch
     watchman
     python312Packages.pywatchman
@@ -28,7 +36,7 @@
       fzf \
         --ansi \
         --bind "enter:execute(echo {} | xargs git checkout)+abort" \
-        --bind "ctrl-o:execute(echo {} | xargs | pbcopy)" \
+        --bind "ctrl-o:execute(echo {} | xargs | ${clipboardCmd})" \
         --bind "ctrl-p:execute(echo {} | xargs gh pr view --web)" \
         --preview="echo {} | xargs -I{} git diff --stat --color \$(git merge-base {} main) {}" \
         --preview-window 'right,70%'
@@ -36,10 +44,6 @@
 
     (pkgs.writeScriptBin "cheat" ''
       curl -s "cht.sh/$1" | less -R
-    '')
-
-    (pkgs.writeScriptBin "ql" ''
-      nohup qlmanage -p $1 >/dev/null 2>&1 &
     '')
   ];
 
@@ -81,11 +85,17 @@
 
   programs.fzf.enable = true;
 
-  programs.atuin.enable = true;
-  programs.atuin.enableZshIntegration = true;
-  programs.atuin.flags = [
-    "--disable-up-arrow"
-  ];
+  programs.atuin = {
+    enable = true;
+    enableZshIntegration = true;
+    flags = [ "--disable-up-arrow" ];
+    settings = {
+      enter_accept = true;
+      search_mode = "fuzzy";
+      filter_mode = "directory";
+      sync.records = true;
+    };
+  };
 
   programs.htop.enable = true;
 

@@ -15,6 +15,7 @@
   };
 
   programs.git.settings = {
+    user.name = "Steven Petryk";
     user.email = "petryk.steven@gmail.com";
     fetch.all = true;
   };

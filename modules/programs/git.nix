@@ -1,4 +1,4 @@
-{ programs, gitName, gitEmail, ... }:
+{ programs, ... }:
 {
   programs.git = {
     enable = true;
@@ -20,6 +20,9 @@
         mnemonicPrefix = true;
         renames = true;
       };
+
+      fetch.prune = true;
+      maintenance.auto = true;
 
       push = {
         default = "simple";
