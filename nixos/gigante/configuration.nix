@@ -5,7 +5,6 @@ rec {
     [
       ./hardware-configuration.nix
       ./cachix.nix
-      ../modules/virtual-display.nix
     ];
 
   system.stateVersion = "25.05"; # See https://nixos.org/nixos/options.html
@@ -94,12 +93,6 @@ rec {
   services.sunshine.capSysAdmin = true;
   services.sunshine.package = pkgs.sunshine.override { cudaSupport = true; };
 
-  # Virtual display
-  # hardware.display.virtual.enable = false;
-  # hardware.display.virtual.edidBinary = ./virtual-display-4k.bin;
-  # hardware.display.virtual.resolution = "3840x2160";
-  # hardware.display.virtual.refreshRate = 60;
-  # hardware.display.virtual.connector = "HDMI-A-1";
 
   #
   # Homelab-adjacent stuff
