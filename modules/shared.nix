@@ -14,6 +14,7 @@ in
     eza
     fd
     ffmpeg
+    gum
     hyperfine
     imagemagick
     jq
