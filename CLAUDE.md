@@ -43,7 +43,6 @@ modules/                    # Home Manager modules (user-level)
 nixos/                      # NixOS system configurations
 ├── gigante/                # Desktop/gaming machine (KDE Plasma 6, NVIDIA, Steam)
 ├── homelad/                # LXC container (headless, NVIDIA, Discord bot)
-│   └── modules/keen-mind.nix  # Keen Mind Discord bot systemd service
 └── modules/                # Shared NixOS modules (empty, for future use)
 ```
 
@@ -64,4 +63,4 @@ Each home-manager config composes modules:
 ### Machine-Specific Notes
 
 - **gigante**: Primary workstation with KDE Plasma 6, proprietary NVIDIA driver, gaming setup (Steam, Lutris, Sunshine streaming)
-- **homelad**: Headless NixOS LXC on Proxmox with GPU passthrough, runs Keen Mind Discord bot as systemd service
+- **homelad**: Headless NixOS LXC on Proxmox with GPU passthrough, imports Keen Mind NixOS module via `builtins.getFlake`

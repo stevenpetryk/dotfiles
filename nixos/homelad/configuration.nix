@@ -7,7 +7,7 @@
   imports = [
     # Include the default lxc/lxd configuration.
     "${modulesPath}/virtualisation/lxc-container.nix"
-    ./modules/keen-mind.nix
+    (builtins.getFlake "/home/steven/src/keen-mind").nixosModules.default
     ./cachix.nix
   ];
 
