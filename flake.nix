@@ -8,6 +8,7 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs-stable";
     };
+    keen-mind.url = "git+file:///home/steven/src/keen-mind";
   };
 
   outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, ... }:
