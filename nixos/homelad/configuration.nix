@@ -16,10 +16,11 @@
   # Graphics
   hardware.graphics.enable = true;
   services.xserver.videoDrivers = ["nvidia"];
-  hardware.nvidia.open = true;
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.production;
+  hardware.nvidia.open = false;  # Proprietary driver needed for nvidia-uvm (CUDA compute)
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
   hardware.nvidia.nvidiaSettings = true;
   hardware.nvidia.modesetting.enable = true;
+  hardware.nvidia.nvidiaPersistenced = true;  # Keep GPU initialized
 
   # Nix
   nixpkgs.config.allowUnfree = true;
@@ -91,6 +92,10 @@
   # Tailscale
   services.tailscale.enable = true;
   services.tailscale.interfaceName = "userspace-networking";
+
+  # AI
+  services.ollama.enable = true;
+  services.ollama.package = pkgs.ollama-cuda;
 
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
