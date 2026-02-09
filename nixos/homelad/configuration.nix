@@ -59,7 +59,7 @@
     users.steven = {
       isNormalUser = true;
       hashedPassword = "!";
-      extraGroups = ["wheel"];
+      extraGroups = ["wheel" "docker"];
       shell = pkgs.zsh;
       openssh.authorizedKeys.keys = [
         # Sync with https://github.com/stevenpetryk.keys
@@ -96,6 +96,13 @@
   # AI
   services.ollama.enable = true;
   services.ollama.package = pkgs.ollama-cuda;
+
+  # Docker with GPU support (for Riva ASR)
+  virtualisation.docker = {
+    enable = true;
+    daemon.settings.features.cdi = true;
+  };
+  hardware.nvidia-container-toolkit.enable = true;
 
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;

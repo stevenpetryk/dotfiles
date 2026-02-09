@@ -28,6 +28,7 @@ in
     sd
     tig
     tldr
+    tmux
     watch
     watchman
     python312Packages.pywatchman
