@@ -108,6 +108,32 @@
   programs.nix-ld.enable = true;
 
 
+  # Foundry VTT
+  systemd.services.vtt = let
+    launcher = pkgs.writeShellApplication {
+      name = "launch-vtt";
+      runtimeInputs = with pkgs; [ nodejs_20 ];
+      text = ''
+        cd /home/steven/src/vtt-private/resources/app/
+        node main.js --port=3006 --dataPath=/var/lib/vtt --proxySSL=true --hostname=vtt.lads.games
+      '';
+    };
+  in {
+    description = "Foundry Virtual Tabletop";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "simple";
+      User = "steven";
+      ExecStart = "${launcher}/bin/launch-vtt";
+      Restart = "always";
+      RestartSec = "5";
+      StateDirectory = "vtt";
+    };
+  };
+
   system.stateVersion = "24.05";
 
   time.timeZone = "America/Los_Angeles";
