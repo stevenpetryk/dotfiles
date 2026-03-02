@@ -18,6 +18,7 @@ in
     hyperfine
     imagemagick
     jq
+    magic-wormhole
     ncdu
     neovim
     nixpkgs-fmt
@@ -98,6 +99,8 @@ in
       sync.records = true;
     };
   };
+
+  xdg.configFile."atuin/config.toml".force = pkgs.lib.mkForce true;
 
   programs.htop.enable = true;
 
