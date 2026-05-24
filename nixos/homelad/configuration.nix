@@ -2,8 +2,26 @@
   modulesPath,
   config,
   pkgs,
+  lib,
   ...
-}: {
+}: let
+  # Keen Mind collaborators. To add a new lad, append an entry here — they
+  # automatically join `keen-mind-dev` (scoped sudo) and `systemd-journal`
+  # (journalctl access). Empty `sshKeys` = account exists but no SSH login.
+  lads = {
+    chris.sshKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDlsmYohoJZEudjDOnn1sOWjQUXKkHy5HCSB9m3dxoFe"
+    ];
+    jacob.sshKeys = [];
+  };
+  ladUsers = lib.mapAttrs (_: lad: {
+    isNormalUser = true;
+    hashedPassword = "!";
+    extraGroups = ["keen-mind-dev" "systemd-journal"];
+    shell = pkgs.zsh;
+    openssh.authorizedKeys.keys = lad.sshKeys;
+  }) lads;
+in {
   imports = [
     # Include the default lxc/lxd configuration.
     "${modulesPath}/virtualisation/lxc-container.nix"
@@ -56,25 +74,45 @@
 
   users = {
     mutableUsers = false;
-    users.steven = {
-      isNormalUser = true;
-      hashedPassword = "!";
-      extraGroups = ["wheel" "docker"];
-      shell = pkgs.zsh;
-      openssh.authorizedKeys.keys = [
-        # Sync with https://github.com/stevenpetryk.keys
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA8MKWpnZktvAr8y1IKj2xXcHE+3/lLUPKvuFgBkhS0"
-      ];
+    groups.keen-mind-dev = {};
+    users = ladUsers // {
+      steven = {
+        isNormalUser = true;
+        hashedPassword = "!";
+        extraGroups = ["wheel" "docker" "keen-mind-dev"];
+        shell = pkgs.zsh;
+        openssh.authorizedKeys.keys = [
+          # Sync with https://github.com/stevenpetryk.keys
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA8MKWpnZktvAr8y1IKj2xXcHE+3/lLUPKvuFgBkhS0"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM4g7jMEeIdC2kBUJhAzlsytXEJcAFADQ7lDgm6OgfkK petryk.steven@gmail.com"
+        ];
+      };
     };
   };
 
-  # Enable passwordless sudo.
   security.sudo.extraRules = [
     {
       users = ["steven"];
       commands = [
         {
           command = "ALL";
+          options = ["NOPASSWD"];
+        }
+      ];
+    }
+    {
+      groups = ["keen-mind-dev"];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/systemctl restart keen-mind";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "/run/current-system/sw/bin/systemctl restart keen-mind-web";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "/run/current-system/sw/bin/systemctl status keen-mind*";
           options = ["NOPASSWD"];
         }
       ];
@@ -106,7 +144,6 @@
 
   # Allow dynamically linked binaries (like the VS Code server)
   programs.nix-ld.enable = true;
-
 
   # Foundry VTT
   systemd.services.vtt = let
