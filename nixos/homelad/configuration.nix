@@ -120,7 +120,12 @@ in {
     - To develop: clone `https://github.com/stevenpetryk/keen-mind` into
       your home directory and work from there. Project-specific guidance
       lives in that repo's `CLAUDE.md`.
-    - Production data: `/var/lib/keen-mind` (same lockdown).
+    - Production data: `/var/lib/keen-mind` (mode 2750, owned
+      `keen-mind:keen-mind-dev`). You can **read** it (point a local dev
+      server at it via `KEEN_MIND_DATA_DIR=/var/lib/keen-mind`) but writes
+      will fail with `EACCES` — that's intentional. If your task needs
+      writable data, copy what you need to `~/keen-mind-data-dev/` or
+      ask steven about the OverlayFS staging pattern used by the bot.
 
     ## Permissions (`keen-mind-dev` group)
 
