@@ -120,20 +120,21 @@ in
     print -P "%F{177}Welcome to %Bhomelad%b, home of %BKeen Mind%b!%f"
     print
 
-    # GitHub SSH agent — skip the network round-trip if no keys are loaded,
-    # so a shell without agent forwarding stays snappy.
+    # Step 1: SSH agent forwarding (also covers the website's step 2
+    # "connect" — if the agent is working, they connected via a working
+    # config; if not, we hand them a config and tell them to reconnect).
+    # Skip the github round-trip if no keys are loaded, so a shell without
+    # agent forwarding stays snappy.
     gh_user=""
     if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -l >/dev/null 2>&1; then
       gh_user=$(ssh -o ConnectTimeout=3 -o BatchMode=yes -T git@github.com 2>&1 \
         | sed -n 's/.*Hi \([^!]*\)!.*/\1/p')
     fi
     if [ -n "$gh_user" ]; then
-      print -P "  %F{green}✓%f GitHub SSH ($gh_user)"
+      print -P "  %F{green}✓%f SSH agent forwarded (GitHub: $gh_user)"
     else
-      print -P "  %F{yellow}!%f GitHub SSH not reachable. Recommended ~/.ssh/config on your local machine:"
+      print -P "  %F{yellow}!%f SSH agent not forwarded. Recommended ~/.ssh/config on your local machine:"
       print
-      # Pull homelad's tailnet DNSName dynamically so a future tailnet
-      # rename doesn't silently leave a stale hostname in the snippet.
       tailnet=$(tailscale status --self --json 2>/dev/null \
         | jq -r '.Self.DNSName // empty' 2>/dev/null \
         | sed 's/\.$//')
@@ -145,22 +146,22 @@ in
             ForwardAgent yes
     EOF
       print
-      print -P "    Then connect with %F{cyan}ssh homelad%f — agent forwarding will be on automatically."
+      print -P "    Then %F{cyan}exit%f and reconnect with %F{cyan}ssh homelad%f."
     fi
 
-    # CUDA reachable? nvidia-smi -L is ~50ms.
-    if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
-      gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
-      print -P "  %F{green}✓%f CUDA visible ($gpu)"
+    # Step 3: Claude Code installed.
+    if command -v claude >/dev/null 2>&1; then
+      print -P "  %F{green}✓%f Claude Code installed"
     else
-      print -P "  %F{yellow}!%f CUDA not reachable"
+      print -P "  %F{yellow}!%f Claude Code not installed — run:"
+      print -P "       %F{cyan}curl -fsSL https://claude.ai/install.sh | bash%f"
     fi
 
-    # keen-mind clone status (direnv is pre-whitelisted for the path).
+    # Step 4: keen-mind cloned (direnv is pre-whitelisted for the path).
     if [ -d ~/src/keen-mind ]; then
-      print -P "  %F{green}✓%f keen-mind cloned — %F{cyan}cd ~/src/keen-mind%f to load the dev shell"
+      print -P "  %F{green}✓%f keen-mind cloned at ~/src/keen-mind"
     else
-      print -P "  %F{yellow}!%f keen-mind not cloned — try:"
+      print -P "  %F{yellow}!%f keen-mind not cloned — run:"
       print -P "       %F{cyan}git clone git@github.com:stevenpetryk/keen-mind ~/src/keen-mind%f"
     fi
 
