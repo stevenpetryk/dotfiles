@@ -12,7 +12,9 @@
     chris.sshKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDlsmYohoJZEudjDOnn1sOWjQUXKkHy5HCSB9m3dxoFe"
     ];
-    jacob.sshKeys = [];
+    jacob.sshKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINCmmlPZ75SGKwviVk4/tz3z7ANYvwrCK3oGQ6qbS3Nb"
+    ];
   };
   ladUsers = lib.mapAttrs (_: lad: {
     isNormalUser = true;
