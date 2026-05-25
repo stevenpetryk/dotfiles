@@ -4,6 +4,9 @@
 # Everything here is system-wide so it lights up the moment a lad logs in,
 # with no per-user home-manager setup needed. Anything they want to override
 # goes in their own ~/.zshrc — zsh sources /etc/zshrc first.
+#
+# Welcome banner art lives in ./keen-mind.txt next to this file and is
+# installed declaratively to /etc/keen-mind.txt.
 
 let
   # Anyone in keen-mind-dev without wheel. Auto-extends when steven adds a
@@ -28,6 +31,7 @@ in
     gh
     delta
     direnv
+    pure-prompt
   ];
 
   # Zsh defaults that apply to every interactive shell. Steven's home-manager
@@ -45,9 +49,19 @@ in
     };
   };
 
-  # System-wide prompt so lads don't get a bare `%`. Steven's `prompt pure`
-  # runs later in his own zshrc and overrides this for his shell.
-  programs.starship.enable = true;
+  # System-wide pure prompt — same one steven uses in his home-manager
+  # setup. promptInit runs after interactiveShellInit in /etc/zshrc; steven
+  # re-runs `prompt pure` in his own ~/.zshrc, which is a harmless no-op.
+  programs.zsh.promptInit = ''
+    fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
+    autoload -U promptinit
+    promptinit
+    prompt pure
+  '';
+
+  # Welcome banner ascii art, declared so /etc/keen-mind.txt survives
+  # rebuilds and lives in the nix store.
+  environment.etc."keen-mind.txt".source = ./keen-mind.txt;
 
   # Seed an empty ~/.zshrc for each lad so zsh doesn't fire its first-run
   # `zsh-newuser-install` wizard on their first shell (which would block
@@ -76,7 +90,16 @@ in
 
     mkdir -p ~/src
 
-    print -P "%F{cyan}Welcome to homelad.%f"
+    # 256-color pink (~#d787ff) — closest cube match to #EA8AF6 that
+    # renders consistently on dark and light terminal backgrounds. Skip
+    # the art if /etc/keen-mind.txt is missing for some reason.
+    if [ -r /etc/keen-mind.txt ]; then
+      print -P "%F{177}"
+      cat /etc/keen-mind.txt
+      print -P "%f"
+    fi
+
+    print -P "%F{177}Welcome to homelad.%f"
     print
 
     # GitHub SSH agent — skip the network round-trip if no keys are loaded,

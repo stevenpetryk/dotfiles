@@ -29,7 +29,7 @@ in {
     "${modulesPath}/virtualisation/lxc-container.nix"
     (builtins.getFlake "git+file:///srv/keen-mind").nixosModules.default
     ./cachix.nix
-    ./lad-polish.nix
+    ./lad-default.nix
   ];
 
   networking.hostName = "homelad";
