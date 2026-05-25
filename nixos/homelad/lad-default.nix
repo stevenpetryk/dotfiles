@@ -112,7 +112,22 @@ in
     if [ -n "$gh_user" ]; then
       print -P "  %F{green}✓%f GitHub SSH ($gh_user)"
     else
-      print -P "  %F{yellow}!%f GitHub SSH not reachable — re-ssh with %F{cyan}-A%f to forward your agent"
+      print -P "  %F{yellow}!%f GitHub SSH not reachable. Recommended ~/.ssh/config on your local machine:"
+      print
+      # Pull homelad's tailnet DNSName dynamically so a future tailnet
+      # rename doesn't silently leave a stale hostname in the snippet.
+      tailnet=$(tailscale status --self --json 2>/dev/null \
+        | jq -r '.Self.DNSName // empty' 2>/dev/null \
+        | sed 's/\.$//')
+      : "''${tailnet:=homelad}"
+      bat --plain --paging=never --color=always --language=ssh_config <<EOF | sed 's/^/    /'
+    Host homelad
+            HostName $tailnet
+            User $USER
+            ForwardAgent yes
+    EOF
+      print
+      print -P "    Then connect with %F{cyan}ssh homelad%f — agent forwarding will be on automatically."
     fi
 
     # CUDA reachable? nvidia-smi -L is ~50ms.
