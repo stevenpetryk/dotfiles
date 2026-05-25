@@ -80,24 +80,50 @@ in
   system.activationScripts.ladDirenvConfig.text = lib.concatStringsSep "\n"
     (lib.mapAttrsToList
       (name: _: ''
-        if [ -d /home/${name} ] && [ ! -e /home/${name}/.config/direnv/direnv.toml ]; then
-          ${pkgs.coreutils}/bin/install -d -o ${name} -g users -m 0755 /home/${name}/.config/direnv
-          ${pkgs.coreutils}/bin/install -o ${name} -g users -m 0644 \
-            ${pkgs.writeText "direnv.toml" ''
-              [whitelist]
-              prefix = [ "/home/${name}/src/keen-mind" ]
-            ''} \
-            /home/${name}/.config/direnv/direnv.toml
+        if [ -d /home/${name} ]; then
+          # install -d only applies ownership to leaf paths it creates, so
+          # pass both ~/.config and ~/.config/direnv explicitly. Then chown
+          # the parent unconditionally to heal hosts where .config was
+          # already created root-owned (which leaves tools that write into
+          # ~/.config — gcloud, etc. — failing with EACCES).
+          ${pkgs.coreutils}/bin/install -d -o ${name} -g users -m 0755 \
+            /home/${name}/.config /home/${name}/.config/direnv
+          ${pkgs.coreutils}/bin/chown ${name}:users /home/${name}/.config
+          if [ ! -e /home/${name}/.config/direnv/direnv.toml ]; then
+            ${pkgs.coreutils}/bin/install -o ${name} -g users -m 0644 \
+              ${pkgs.writeText "direnv.toml" ''
+                [whitelist]
+                prefix = [ "/home/${name}/src/keen-mind" ]
+              ''} \
+              /home/${name}/.config/direnv/direnv.toml
+          fi
         fi
       '')
       lads);
+
+  # Expose the dotfiles repo at /srv/dotfiles so lads can read it without
+  # any traversal rights on /home/steven (which stays 0700 — `.ssh`, shell
+  # history, anything else under it stays invisible). Read-only bind mount
+  # so even if perms drift on the source, nothing here is writable through
+  # this path. `nofail` keeps the system bootable if /home/steven/dotfiles
+  # is missing during a migration.
+  fileSystems."/srv/dotfiles" = {
+    device = "/home/steven/dotfiles";
+    fsType = "none";
+    options = [ "bind" "ro" "nofail" ];
+  };
 
   # ------------------------------------------------------------------
   # Welcome + startup checks for keen-mind-dev members. Runs once per
   # shell session — the HOMELAD_GREETED env var carries across spawned
   # subshells (tmux panes, nested zsh, etc.) so it doesn't spam.
   # ------------------------------------------------------------------
+  # Wrapped in a function so internal `return`s exit the greeting, not the
+  # whole /etc/zshrc — NixOS appends interactiveShellInit at the top of
+  # /etc/zshrc, and later lines (direnv hook, syntax highlighting, etc.)
+  # would otherwise be skipped for non-keen-mind-dev or repeat-shell cases.
   programs.zsh.interactiveShellInit = ''
+    _homelad_greeting() {
     # Everyone in keen-mind-dev gets the welcome (steven included — once
     # per session, gated by HOMELAD_GREETED below).
     if ! groups | grep -qw keen-mind-dev; then return; fi
@@ -183,5 +209,8 @@ in
     else
       cd ~/src
     fi
+    }
+    _homelad_greeting
+    unset -f _homelad_greeting
   '';
 }

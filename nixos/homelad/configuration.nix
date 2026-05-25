@@ -108,8 +108,12 @@ in {
       <pkg>` for a transient shell).
     - `direnv` is enabled; many projects auto-load their toolchain via
       `.envrc` when you `cd` in — no manual shell entry needed.
-    - System config lives under `~steven/dotfiles` and is owned by steven.
-      Surface needed changes to him rather than editing.
+    - System config (NixOS + home-manager) is published read-only at
+      `/srv/dotfiles` (a bind mount of steven's working tree; `~steven`
+      itself stays private). `cat`, `grep`, and `find` there to answer
+      "how is X configured on this host" — writes will fail with EROFS.
+      Surface needed changes to steven rather than trying to apply them
+      yourself.
 
     ## Keen Mind project
 
