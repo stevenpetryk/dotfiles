@@ -102,6 +102,13 @@ in
     # per session, gated by HOMELAD_GREETED below).
     if ! groups | grep -qw keen-mind-dev; then return; fi
 
+    # Put ~/.local/bin on PATH — that's where the Claude Code installer
+    # drops `claude`, and steven's home-manager does this for him already.
+    case ":$PATH:" in
+      *":$HOME/.local/bin:"*) ;;
+      *) export PATH="$HOME/.local/bin:$PATH" ;;
+    esac
+
     # Interactive tty, once per session.
     [[ $- == *i* && -t 1 && -z "$HOMELAD_GREETED" ]] || return
     export HOMELAD_GREETED=1
@@ -149,11 +156,9 @@ in
       print -P "    Then %F{cyan}exit%f and reconnect with %F{cyan}ssh homelad%f."
     fi
 
-    # Step 3: Claude Code installed. The official installer drops a binary
-    # at ~/.local/bin/claude, but ~/.local/bin may not be on PATH yet at
-    # /etc/zshrc time (home-manager's PATH extension runs later in
-    # ~/.zshrc), so check the path directly as well as the command.
-    if [ -x "$HOME/.local/bin/claude" ] || command -v claude >/dev/null 2>&1; then
+    # Step 3: Claude Code installed (binary lives at ~/.local/bin/claude,
+    # which the PATH export above makes discoverable).
+    if command -v claude >/dev/null 2>&1; then
       print -P "  %F{green}✓%f Claude Code installed"
     else
       print -P "  %F{yellow}!%f Claude Code not installed — run:"
