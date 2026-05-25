@@ -149,8 +149,11 @@ in
       print -P "    Then %F{cyan}exit%f and reconnect with %F{cyan}ssh homelad%f."
     fi
 
-    # Step 3: Claude Code installed.
-    if command -v claude >/dev/null 2>&1; then
+    # Step 3: Claude Code installed. The official installer drops a binary
+    # at ~/.local/bin/claude, but ~/.local/bin may not be on PATH yet at
+    # /etc/zshrc time (home-manager's PATH extension runs later in
+    # ~/.zshrc), so check the path directly as well as the command.
+    if [ -x "$HOME/.local/bin/claude" ] || command -v claude >/dev/null 2>&1; then
       print -P "  %F{green}✓%f Claude Code installed"
     else
       print -P "  %F{yellow}!%f Claude Code not installed — run:"
