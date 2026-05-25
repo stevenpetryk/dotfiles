@@ -1,9 +1,19 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 # Distilled shell experience for keen-mind-dev "lads" (chris, jacob, …).
 # Everything here is system-wide so it lights up the moment a lad logs in,
 # with no per-user home-manager setup needed. Anything they want to override
 # goes in their own ~/.zshrc — zsh sources /etc/zshrc first.
+
+let
+  # Anyone in keen-mind-dev without wheel. Auto-extends when steven adds a
+  # new lad to configuration.nix without needing to touch this file.
+  lads = lib.filterAttrs
+    (_: u:
+      builtins.elem "keen-mind-dev" (u.extraGroups or [])
+      && !builtins.elem "wheel" (u.extraGroups or []))
+    config.users.users;
+in
 {
   # CLI ergonomics for everyone on the box.
   environment.systemPackages = with pkgs; [
@@ -38,6 +48,13 @@
   # System-wide prompt so lads don't get a bare `%`. Steven's `prompt pure`
   # runs later in his own zshrc and overrides this for his shell.
   programs.starship.enable = true;
+
+  # Seed an empty ~/.zshrc for each lad so zsh doesn't fire its first-run
+  # `zsh-newuser-install` wizard on their first shell (which would block
+  # the welcome MOTD waiting for keyboard input).
+  systemd.tmpfiles.rules = lib.mapAttrsToList
+    (name: _: "f /home/${name}/.zshrc 0644 ${name} users -")
+    lads;
 
   # ------------------------------------------------------------------
   # Lad welcome + startup checks.
