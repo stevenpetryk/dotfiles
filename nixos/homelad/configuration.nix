@@ -90,6 +90,56 @@ in {
     };
   };
 
+  # System-wide CLAUDE.md picked up by Claude Code for every account on the
+  # host. Keep it to the minimum a lad needs on first SSH-in: how to install
+  # tools, what their sudo scope is, where the project lives, where logs go.
+  # Project-specific guidance belongs in /srv/keen-mind/CLAUDE.md (or the
+  # lad's own clone), not here. Per-user overrides go in ~/CLAUDE.md.
+  environment.etc."claude-code/CLAUDE.md".text = ''
+    ## Environment
+
+    You are on NixOS in an LXC container (`homelad`). The system is
+    declaratively configured — software is not installed with apt/dnf/brew.
+
+    - Ad-hoc tools: `nix shell nixpkgs#<pkg> -c <cmd>` (or `nix-shell -p
+      <pkg>` for a transient shell).
+    - `direnv` is enabled; many projects auto-load their toolchain via
+      `.envrc` when you `cd` in — no manual shell entry needed.
+    - System config lives under `~steven/dotfiles` and is owned by steven.
+      Surface needed changes to him rather than editing.
+
+    ## Keen Mind project
+
+    The Keen Mind project is the main work on this host.
+
+    - Production checkout: `/srv/keen-mind` (mode 0750, owned by the
+      `keen-mind` service user). You cannot read or write it.
+    - To develop: clone `https://github.com/stevenpetryk/keen-mind` into
+      your home directory and work from there. Project-specific guidance
+      lives in that repo's `CLAUDE.md`.
+    - Production data: `/var/lib/keen-mind` (same lockdown).
+
+    ## Permissions (`keen-mind-dev` group)
+
+    Your account is in `keen-mind-dev`. Passwordless sudo is scoped to:
+
+    - `sudo systemctl start keen-mind-deploy` — pulls `origin/main` into
+      `/srv/keen-mind` and rebuilds/restarts only what changed. This is how
+      merged work reaches production.
+    - `sudo systemctl restart keen-mind` / `keen-mind-web`
+    - `sudo systemctl status keen-mind*`
+
+    You do not have general sudo. To ship: PR → merge → `keen-mind-deploy`.
+
+    ## Logs
+
+    `journalctl -u <unit>` works without sudo (`systemd-journal` group):
+
+    - `journalctl -u keen-mind` — Discord bot
+    - `journalctl -u keen-mind-web` — transcript viewer
+    - `journalctl -u keen-mind-deploy` — last deploy
+  '';
+
   security.sudo.extraRules = [
     {
       users = ["steven"];
