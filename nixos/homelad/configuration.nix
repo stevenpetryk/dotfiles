@@ -135,7 +135,6 @@ in {
       `/srv/keen-mind` and rebuilds/restarts only what changed. This is how
       merged work reaches production.
     - `sudo systemctl restart keen-mind` / `keen-mind-web`
-    - `sudo systemctl status keen-mind*`
 
     You do not have general sudo. To ship: PR → merge → `keen-mind-deploy`.
 
@@ -167,10 +166,6 @@ in {
         }
         {
           command = "/run/current-system/sw/bin/systemctl restart keen-mind-web";
-          options = ["NOPASSWD"];
-        }
-        {
-          command = "/run/current-system/sw/bin/systemctl status keen-mind*";
           options = ["NOPASSWD"];
         }
       ];
