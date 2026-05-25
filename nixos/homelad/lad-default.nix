@@ -73,6 +73,25 @@ in
     (name: _: "f /home/${name}/.zshrc 0644 ${name} users -")
     lads;
 
+  # Pre-whitelist each lad's keen-mind clone with direnv so they don't
+  # have to run `direnv allow` before the dev shell loads on first cd.
+  # Only seeded if no direnv.toml exists — once they've customized, we
+  # leave it alone. Steven is excluded (he manages his own direnv config).
+  system.activationScripts.ladDirenvConfig.text = lib.concatStringsSep "\n"
+    (lib.mapAttrsToList
+      (name: _: ''
+        if [ -d /home/${name} ] && [ ! -e /home/${name}/.config/direnv/direnv.toml ]; then
+          ${pkgs.coreutils}/bin/install -d -o ${name} -g users -m 0755 /home/${name}/.config/direnv
+          ${pkgs.coreutils}/bin/install -o ${name} -g users -m 0644 \
+            ${pkgs.writeText "direnv.toml" ''
+              [whitelist]
+              prefix = [ "/home/${name}/src/keen-mind" ]
+            ''} \
+            /home/${name}/.config/direnv/direnv.toml
+        fi
+      '')
+      lads);
+
   # ------------------------------------------------------------------
   # Welcome + startup checks for keen-mind-dev members. Runs once per
   # shell session — the HOMELAD_GREETED env var carries across spawned
@@ -137,9 +156,9 @@ in
       print -P "  %F{yellow}!%f CUDA not reachable"
     fi
 
-    # keen-mind clone status.
+    # keen-mind clone status (direnv is pre-whitelisted for the path).
     if [ -d ~/src/keen-mind ]; then
-      print -P "  %F{green}✓%f keen-mind cloned — run %F{cyan}direnv allow%f inside if you haven't"
+      print -P "  %F{green}✓%f keen-mind cloned — %F{cyan}cd ~/src/keen-mind%f to load the dev shell"
     else
       print -P "  %F{yellow}!%f keen-mind not cloned — try:"
       print -P "       %F{cyan}git clone git@github.com:stevenpetryk/keen-mind ~/src/keen-mind%f"
