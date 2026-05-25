@@ -9,8 +9,11 @@
 # installed declaratively to /etc/keen-mind.txt.
 
 let
-  # Anyone in keen-mind-dev without wheel. Auto-extends when steven adds a
-  # new lad to configuration.nix without needing to touch this file.
+  # Used to seed an empty ~/.zshrc per lad (see systemd.tmpfiles below).
+  # Auto-extends when a new lad is added to configuration.nix. Excludes
+  # wheel members so steven's home-manager-managed ~/.zshrc is left
+  # alone (tmpfiles's `f` is no-op on existing files anyway, but the
+  # rule shouldn't even mention steven's home).
   lads = lib.filterAttrs
     (_: u:
       builtins.elem "keen-mind-dev" (u.extraGroups or [])
@@ -71,18 +74,14 @@ in
     lads;
 
   # ------------------------------------------------------------------
-  # Lad welcome + startup checks.
-  #
-  # Runs in /etc/zshrc on every interactive shell, but the gate at the top
-  # bails for anyone with `wheel` (steven and any future full-admin), so it
-  # only fires for keen-mind-dev members. Runs once per shell session — the
-  # HOMELAD_GREETED env var carries across spawned subshells (tmux panes,
-  # nested zsh, etc.) so it doesn't spam.
+  # Welcome + startup checks for keen-mind-dev members. Runs once per
+  # shell session — the HOMELAD_GREETED env var carries across spawned
+  # subshells (tmux panes, nested zsh, etc.) so it doesn't spam.
   # ------------------------------------------------------------------
   programs.zsh.interactiveShellInit = ''
-    # Lad-only: must be in keen-mind-dev, must NOT have full sudo.
+    # Everyone in keen-mind-dev gets the welcome (steven included — once
+    # per session, gated by HOMELAD_GREETED below).
     if ! groups | grep -qw keen-mind-dev; then return; fi
-    if   groups | grep -qw wheel;         then return; fi
 
     # Interactive tty, once per session.
     [[ $- == *i* && -t 1 && -z "$HOMELAD_GREETED" ]] || return
