@@ -99,7 +99,7 @@ in
       print -P "%f"
     fi
 
-    print -P "%F{177}Welcome to homelad.%f"
+    print -P "%F{177}Welcome to %Bhomelad%b, home of %BKeen Mind%b!%f"
     print
 
     # GitHub SSH agent — skip the network round-trip if no keys are loaded,
