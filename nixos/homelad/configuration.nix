@@ -15,6 +15,8 @@
     jacob.sshKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINCmmlPZ75SGKwviVk4/tz3z7ANYvwrCK3oGQ6qbS3Nb"
     ];
+    bill.sshKeys = [];
+    zach.sshKeys = [];
   };
   ladUsers = lib.mapAttrs (_: lad: {
     isNormalUser = true;
