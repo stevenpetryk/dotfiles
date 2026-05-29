@@ -140,7 +140,8 @@ in {
     - `sudo systemctl start keen-mind-deploy` — pulls `origin/main` into
       `/srv/keen-mind` and rebuilds/restarts only what changed. This is how
       merged work reaches production.
-    - `sudo systemctl restart keen-mind` / `keen-mind-web`
+    - `sudo systemctl restart keen-mind` / `keen-mind-web` /
+      `keen-mind-scheduler` / `keen-mind-ingress`
 
     You do not have general sudo. To ship: PR → merge → `keen-mind-deploy`.
 
@@ -150,7 +151,21 @@ in {
 
     - `journalctl -u keen-mind` — Discord bot
     - `journalctl -u keen-mind-web` — transcript viewer
+    - `journalctl -u keen-mind-scheduler` — schedule firing loop
+    - `journalctl -u keen-mind-ingress` — webhook ingress (hooks.lads.games)
+    - `journalctl -u nats` — firehose broker (NATS JetStream)
     - `journalctl -u keen-mind-deploy` — last deploy
+
+    ## Firehose
+
+    A NATS JetStream event bus runs on `127.0.0.1:4222` carrying Discord,
+    recording, pipeline, deploy, cron, and GitHub-webhook events. A read-only
+    debugging credential is shared with the group:
+
+    `nats sub --server nats://127.0.0.1:4222 --nkey /var/secrets/keen-mind/dev-shared/nats-dev.nk '>'`
+
+    See the keen-mind repo's CLAUDE.md ("Firehose") and SECURITY.md for the
+    subject catalog and trust rules.
   '';
 
   security.sudo.extraRules = [
@@ -172,6 +187,14 @@ in {
         }
         {
           command = "/run/current-system/sw/bin/systemctl restart keen-mind-web";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "/run/current-system/sw/bin/systemctl restart keen-mind-ingress";
           options = ["NOPASSWD"];
         }
       ];
