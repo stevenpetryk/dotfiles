@@ -25,6 +25,49 @@
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = lad.sshKeys;
   }) lads;
+
+  # Reads lads.json and upserts each lad into calibre-web's user db as a full
+  # admin (username = their name, login keyed on email). Runs as root because
+  # calibre-web deliberately stays out of keen-mind-dev — it must not be able to
+  # read /var/lib/keen-mind — so it can't read lads.json itself.
+  calibreSeederPython = pkgs.python3.withPackages (ps: [ps.werkzeug]);
+  calibreSeeder = pkgs.writeText "calibre-web-seed.py" ''
+    import json, sqlite3, secrets
+    from werkzeug.security import generate_password_hash
+
+    APP_DB = "/var/lib/calibre-web/app.db"
+    LADS = "/var/lib/keen-mind/lads.json"
+
+    # constants.ADMIN_USER_ROLES (all roles except ROLE_ANONYMOUS) and
+    # constants.ADMIN_USER_SIDEBAR ((SIDEBAR_LIST << 1) - 1) from calibre-web.
+    ALL_ROLES = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 8)
+    ALL_SIDEBAR = (1 << 18) - 1
+
+    lads = json.load(open(LADS))
+    # Open existing-only: never create the db ourselves (calibre-web owns it and
+    # creates it on first start; a root-created file would lock calibre-web out).
+    db = sqlite3.connect(f"file:{APP_DB}?mode=rw", uri=True)
+    for lad in lads:
+        name, email = lad["name"], lad["email"]
+        row = db.execute("SELECT id FROM user WHERE lower(email) = lower(?)", (email,)).fetchone()
+        if row:
+            db.execute("UPDATE user SET name = ?, role = ? WHERE id = ?", (name, ALL_ROLES, row[0]))
+        else:
+            db.execute(
+                "INSERT INTO user (name, email, password, role, sidebar_view, locale, "
+                "default_language, denied_tags, allowed_tags, denied_column_value, "
+                "allowed_column_value, view_settings, kindle_mail, kobo_only_shelves_sync) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (name, email, generate_password_hash(secrets.token_urlsafe(32)), ALL_ROLES,
+                 ALL_SIDEBAR, "en", "all", "", "", "", "", "{}", "", 0),
+            )
+    # Retire the bootstrap admin calibre-web auto-creates (known default
+    # password); the seeded lads are all admins, so one is always left.
+    db.execute("DELETE FROM user WHERE name = 'admin'")
+    db.commit()
+    db.close()
+    print(f"Seeded {len(lads)} calibre-web users")
+  '';
 in {
   imports = [
     # Include the default lxc/lxd configuration.
@@ -250,6 +293,50 @@ in {
       Restart = "always";
       RestartSec = "5";
       StateDirectory = "vtt";
+    };
+  };
+
+  # Calibre-Web — ebook library at calibre.lads.games. Loopback-only; the
+  # Cloudflare tunnel + Access front it like the other web apps, and reverse-
+  # proxy auth trusts the Access-verified email header (same pattern Grafana
+  # uses above). Kobo sync is deliberately not wired up yet.
+  services.calibre-web = {
+    enable = true;
+    listen.ip = "127.0.0.1";
+    listen.port = 3007;
+    dataDir = "/var/lib/calibre-web";
+    # Reverse-proxy login matches the header against username by default; patch
+    # it to match the email column instead so usernames stay friendly (the
+    # lad's name) while login keys off Cf-Access-Authenticated-User-Email.
+    package = pkgs.calibre-web.overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        substituteInPlace src/calibreweb/cps/usermanagement.py \
+          --replace-fail 'func.lower(ub.User.name) == rp_header_username.lower()' \
+                         'func.lower(ub.User.email) == rp_header_username.lower()'
+      '';
+    });
+    options = {
+      calibreLibrary = "/var/lib/calibre-library";
+      enableBookConversion = true;
+      enableBookUploading = true;
+      enableKepubify = true;
+      reverseProxyAuth = {
+        enable = true;
+        header = "Cf-Access-Authenticated-User-Email";
+      };
+    };
+  };
+
+  # Keep the lads' calibre-web accounts in sync with lads.json. WantedBy +
+  # After calibre-web so it re-runs on every (re)start; restart this unit after
+  # editing lads.json to force a re-sync.
+  systemd.services.calibre-web-seed-users = {
+    description = "Seed calibre-web users from lads.json";
+    after = ["calibre-web.service"];
+    wantedBy = ["calibre-web.service"];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${calibreSeederPython}/bin/python3 ${calibreSeeder}";
     };
   };
 
