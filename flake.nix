@@ -87,6 +87,15 @@
               sed -i 's/json:"schedule_with_duration"/json:"schedule_with_duration,omitempty"/' \
                 vendor/github.com/ubiquiti-community/go-unifi/unifi/wlan.generated.go
             '';
+            # The provider accepts src_mac in config but never sends it to the
+            # API, turning a per-device rule into a drop-everything rule.
+            patches = [ ./unifi/patches/firewall-rule-src-mac.patch ];
+            # The provider validates rule_index against the pre-9.x controller
+            # ranges; newer firmware (Express 7) assigns/expects 2xxxx indexes.
+            postPatch = ''
+              sed -i 's/int64validator.Between(2000, 2999)/int64validator.Between(2000, 29999)/' \
+                unifi/firewall_rule_resource.go
+            '';
             doCheck = false;
             subPackages = [ "." ];
           };

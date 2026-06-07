@@ -1,0 +1,25 @@
+--- a/unifi/firewall_rule_resource.go
++++ b/unifi/firewall_rule_resource.go
+@@ -576,6 +576,9 @@
+ 	}
+ 	if !model.SrcPort.IsNull() {
+ 		firewallRule.SrcPort = model.SrcPort.ValueString()
++	}
++	if !model.SrcMac.IsNull() {
++		firewallRule.SrcMACAddress = model.SrcMac.ValueString()
+ 	}
+ 
+ 	if !model.DstNetworkID.IsNull() {
+@@ -696,7 +699,11 @@
+ 		model.SrcPort = types.StringNull()
+ 	}
+ 
+-	model.SrcMac = types.StringNull()
++	if firewallRule.SrcMACAddress != "" {
++		model.SrcMac = types.StringValue(firewallRule.SrcMACAddress)
++	} else {
++		model.SrcMac = types.StringNull()
++	}
+ 
+ 	if firewallRule.DstNetworkID != "" {
+ 		model.DstNetworkID = types.StringValue(firewallRule.DstNetworkID)

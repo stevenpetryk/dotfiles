@@ -49,6 +49,53 @@ in
     sensitive = true;
   };
 
+  # LG C6 TV: known to the network but blocked from the internet.
+  # LAN_IN only governs routed traffic, so same-subnet control/casting
+  # still works; only WAN access is dropped.
+  resource.unifi_client = {
+    lg_tv_wireless = {
+      mac = "70:3e:76:18:63:6c";
+      name = "LG TV (wireless)";
+      fixed_ip = "192.168.1.200";
+    };
+    lg_tv_wired = {
+      mac = "d0:cd:bf:1a:34:80";
+      name = "LG TV (wired)";
+      fixed_ip = "192.168.1.201";
+    };
+  };
+
+  resource.unifi_firewall_rule = {
+    block_lg_tv_wireless = {
+      name = "Block LG TV internet (wireless)";
+      ruleset = "LAN_IN";
+      rule_index = 20000;
+      action = "drop";
+      src_mac = "70:3e:76:18:63:6c";
+      protocol = "all";
+      enabled = true;
+      logging = false;
+      state_established = false;
+      state_invalid = false;
+      state_new = false;
+      state_related = false;
+    };
+    block_lg_tv_wired = {
+      name = "Block LG TV internet (wired)";
+      ruleset = "LAN_IN";
+      rule_index = 20001;
+      action = "drop";
+      src_mac = "d0:cd:bf:1a:34:80";
+      protocol = "all";
+      enabled = true;
+      logging = false;
+      state_established = false;
+      state_invalid = false;
+      state_new = false;
+      state_related = false;
+    };
+  };
+
   resource.restapi_object = lib.listToAttrs (map
     (domain: {
       name = "dns_block_${lib.replaceStrings [ "." ] [ "_" ] domain}";
