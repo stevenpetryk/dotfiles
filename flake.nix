@@ -8,9 +8,13 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs-stable";
     };
+    terranix = {
+      url = "github:terranix/terranix";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
   };
 
-  outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, ... }:
+  outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, terranix, ... }:
     let
       createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules, pkgs }: home-manager.lib.homeManagerConfiguration {
         pkgs = pkgs.legacyPackages.${system};
@@ -60,9 +64,83 @@
         program = "${nixpkgs-stable.legacyPackages.x86_64-linux.home-manager}/bin/home-manager";
       };
 
-      apps.aarch64-darwin.home-manager = {
-        type = "app";
-        program = "${nixpkgs-stable.legacyPackages.aarch64-darwin.home-manager}/bin/home-manager";
-      };
+      apps.aarch64-darwin =
+        let
+          system = "aarch64-darwin";
+          pkgs = nixpkgs-stable.legacyPackages.${system};
+
+          # Built from source to fix a serialization bug: the provider sends
+          # "schedule_with_duration": null on WLAN updates, which UniFi
+          # Express 7 firmware rejects with api.err.InvalidPayload (400).
+          terraform-provider-unifi = pkgs.buildGoModule rec {
+            pname = "terraform-provider-unifi";
+            version = "0.41.25";
+            src = pkgs.fetchFromGitHub {
+              owner = "ubiquiti-community";
+              repo = "terraform-provider-unifi";
+              rev = "v${version}";
+              hash = "sha256-Y3MgMRhWmXYp0aYLIkV2Ug5bZb8LsPYr3oJkXhPtQoo=";
+            };
+            vendorHash = "sha256-ghS0Jii0o3BBrb23us/H6XLZ5ry52KD5hFelhUqlVnw=";
+            # Patch the vendored go-unifi SDK to omit the field when empty
+            modPostBuild = ''
+              sed -i 's/json:"schedule_with_duration"/json:"schedule_with_duration,omitempty"/' \
+                vendor/github.com/ubiquiti-community/go-unifi/unifi/wlan.generated.go
+            '';
+            doCheck = false;
+            subPackages = [ "." ];
+          };
+
+          terraformConfig = terranix.lib.terranixConfiguration {
+            inherit system;
+            modules = [ ./unifi/config.nix ];
+          };
+
+          unifiTofu = name: command: pkgs.writeShellScript "unifi-${name}" ''
+            set -e
+            if [ ! -d "unifi" ]; then
+              echo "Error: unifi/ directory not found. Run from repository root." >&2
+              exit 1
+            fi
+
+            UNIFI_API_KEY=$(cat "$HOME/.config/unifi/api_key")
+            export UNIFI_API_KEY
+            export UNIFI_API="https://192.168.1.1"
+            export UNIFI_INSECURE="true"
+            TF_VAR_wifi_passphrase=$(cat "$HOME/.config/unifi/wifi_passphrase")
+            export TF_VAR_wifi_passphrase
+            # Use our patched provider build (see terraform-provider-unifi above)
+            export TF_CLI_CONFIG_FILE=${pkgs.writeText "unifi-tofu.tfrc" ''
+              provider_installation {
+                dev_overrides {
+                  "ubiquiti-community/unifi" = "${terraform-provider-unifi}/bin"
+                }
+                direct {}
+              }
+            ''}
+
+            rm -f unifi/config.tf.json
+            cp ${terraformConfig} unifi/config.tf.json
+            cd unifi
+            if [ ! -d .terraform ]; then
+              ${pkgs.opentofu}/bin/tofu init
+            fi
+            ${pkgs.opentofu}/bin/tofu ${command}
+          '';
+        in
+        {
+          home-manager = {
+            type = "app";
+            program = "${pkgs.home-manager}/bin/home-manager";
+          };
+          unifi-plan = {
+            type = "app";
+            program = toString (unifiTofu "plan" "plan");
+          };
+          unifi-apply = {
+            type = "app";
+            program = toString (unifiTofu "apply" "apply -auto-approve");
+          };
+        };
     };
 }
