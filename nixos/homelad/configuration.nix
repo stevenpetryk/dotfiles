@@ -106,6 +106,27 @@ in {
     rsync
   ];
 
+  # Grant the keen-mind-dev group read access to the Agent SDK session
+  # transcripts the bot/coordinator write under /var/lib/keen-mind-{bot,
+  # coordinator}-home. tmpfiles owns the homes 0700 keen-mind:keen-mind, and
+  # the SDK writes individual .jsonl files 0600 — so by default lads can't
+  # read them, and the web debug viewer (running as steven on the dev box)
+  # silently drops any session whose jsonl returned EACCES.
+  #
+  # The long-term home is nixos/module.nix in the keen-mind repo (already
+  # has the same setfacl loop in keen-mind-tree-perms). This activation here
+  # is the "apply now without a deploy" copy and can be removed once the
+  # module change has landed in /srv/keen-mind via `keen-mind-deploy`.
+  system.activationScripts.keen-mind-agent-home-acls = ''
+    for home in /var/lib/keen-mind-bot-home /var/lib/keen-mind-coordinator-home; do
+      projects="$home/.claude/projects"
+      [ -d "$projects" ] || continue
+      ${pkgs.acl}/bin/setfacl -R -m g:keen-mind-dev:rX "$projects"
+      ${pkgs.findutils}/bin/find "$projects" -type d -exec \
+        ${pkgs.acl}/bin/setfacl -d -m g:keen-mind-dev:rX {} +
+    done
+  '';
+
   programs.direnv.enable = true;
 
   # Allow SSH access
