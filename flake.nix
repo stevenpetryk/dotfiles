@@ -109,6 +109,7 @@
             export UNIFI_INSECURE="true"
             TF_VAR_wifi_passphrase=$(cat "$HOME/.config/unifi/wifi_passphrase")
             export TF_VAR_wifi_passphrase
+            export TF_VAR_unifi_api_key="$UNIFI_API_KEY"
             # Use our patched provider build (see terraform-provider-unifi above)
             export TF_CLI_CONFIG_FILE=${pkgs.writeText "unifi-tofu.tfrc" ''
               provider_installation {

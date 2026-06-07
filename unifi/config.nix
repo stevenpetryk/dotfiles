@@ -1,18 +1,78 @@
 # Terranix configuration for the UniFi Express 7 at 192.168.1.1.
-# Credentials come from the environment (set by the unifi-tofu wrapper):
-#   UNIFI_API, UNIFI_API_KEY, UNIFI_INSECURE, TF_VAR_wifi_passphrase
+# Credentials come from the environment (set by the unifi-plan/apply apps):
+#   UNIFI_API, UNIFI_API_KEY, UNIFI_INSECURE,
+#   TF_VAR_wifi_passphrase, TF_VAR_unifi_api_key
+{ lib, ... }:
+
+let
+  # Resolve these to 0.0.0.0 on the gateway's DNS (LG TV ads/tracking).
+  # The unifi provider has no static-DNS resource, so these go through the
+  # controller's v2 API via the generic restapi provider.
+  blockedDomains = [
+    "ad.lgappstv.com"
+    "ads.lgads.tv"
+    "lgads.tv"
+    "ads.lgsmartad.com"
+    "us.ad.lgsmartad.com"
+    "kr.ad.lgsmartad.com"
+    "info.lgsmartad.com"
+    "ibis.lgappstv.com"
+    "lgad.cjpowercast.com"
+  ];
+in
 {
   terraform.required_providers.unifi = {
     source = "ubiquiti-community/unifi";
     version = "~> 0.41.0";
   };
+  terraform.required_providers.restapi = {
+    source = "Mastercard/restapi";
+    version = "~> 2.0";
+  };
 
   provider.unifi = { };
+
+  provider.restapi = {
+    uri = "https://192.168.1.1/proxy/network/v2/api/site/default";
+    insecure = true;
+    write_returns_object = true;
+    id_attribute = "_id";
+    headers."X-API-KEY" = "\${var.unifi_api_key}";
+  };
 
   variable.wifi_passphrase = {
     type = "string";
     sensitive = true;
   };
+  variable.unifi_api_key = {
+    type = "string";
+    sensitive = true;
+  };
+
+  resource.restapi_object = lib.listToAttrs (map
+    (domain: {
+      name = "dns_block_${lib.replaceStrings [ "." ] [ "_" ] domain}";
+      value = {
+        path = "/static-dns";
+        # The v2 API has no GET-by-id (405), so reads search the collection
+        read_path = "/static-dns";
+        read_search = {
+          search_key = "key";
+          search_value = domain;
+        };
+        data = builtins.toJSON {
+          record_type = "A";
+          key = domain;
+          value = "0.0.0.0";
+          enabled = true;
+        };
+        # Reads return server-added fields (_id, ttl, ...) that would diff
+        # against our minimal data forever. These records never change; to
+        # alter one, rename the resource (or tofu taint) to recreate it.
+        lifecycle.ignore_changes = [ "data" ];
+      };
+    })
+    blockedDomains);
 
   # Default LAN: 192.168.1.0/24
   resource.unifi_network.default = {
