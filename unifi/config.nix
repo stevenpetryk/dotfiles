@@ -19,6 +19,46 @@ let
     "ibis.lgappstv.com"
     "lgad.cjpowercast.com"
   ];
+
+  # Helpers for patching in resources the unifi provider doesn't model,
+  # via the generic restapi provider. Two shapes show up against the UniFi
+  # controller API; one factory each.
+
+  # v2 collection object (e.g. static DNS). The v2 API has no GET-by-id
+  # (405), so reads search the collection by a unique field. ignore_changes
+  # guards server-added fields (_id, ttl, ...) from diffing against our
+  # minimal data forever; to change one, rename the resource or tofu taint.
+  mkV2Object = { path, searchKey, data }: {
+    inherit path;
+    read_path = path;
+    read_search = {
+      search_key = searchKey;
+      search_value = data.${searchKey};
+    };
+    data = builtins.toJSON data;
+    lifecycle.ignore_changes = [ "data" ];
+  };
+
+  # v1 site setting (e.g. the LCM display). Settings are singletons keyed
+  # by `key` that always exist: create and update are both PUTs to the
+  # fixed path, and destroy is a harmless GET (settings can't be deleted).
+  # v1 wraps reads in {meta, data: [...]} and adds server fields, so we set
+  # object_id explicitly and ignore_changes on data. To change a value,
+  # edit it here and `tofu taint restapi_object.<name>` to PUT-recreate.
+  mkV1Setting = key: data: {
+    provider = "restapi.v1";
+    object_id = key;
+    path = "/rest/setting/${key}";
+    create_method = "PUT";
+    create_path = "/rest/setting/${key}";
+    update_method = "PUT";
+    update_path = "/rest/setting/${key}";
+    read_path = "/rest/setting/${key}";
+    destroy_method = "GET";
+    destroy_path = "/rest/setting/${key}";
+    data = builtins.toJSON ({ inherit key; } // data);
+    lifecycle.ignore_changes = [ "data" ];
+  };
 in
 {
   terraform.required_providers.unifi = {
@@ -32,13 +72,24 @@ in
 
   provider.unifi = { };
 
-  provider.restapi = {
-    uri = "https://192.168.1.1/proxy/network/v2/api/site/default";
-    insecure = true;
-    write_returns_object = true;
-    id_attribute = "_id";
-    headers."X-API-KEY" = "\${var.unifi_api_key}";
-  };
+  provider.restapi = [
+    {
+      uri = "https://192.168.1.1/proxy/network/v2/api/site/default";
+      insecure = true;
+      write_returns_object = true;
+      id_attribute = "_id";
+      headers."X-API-KEY" = "\${var.unifi_api_key}";
+    }
+    # Some settings (e.g. the LCM display) only exist in the legacy v1 API.
+    # v1 wraps responses in {meta, data: [...]}, so resources using this
+    # alias must set object_id explicitly instead of relying on id_attribute.
+    {
+      alias = "v1";
+      uri = "https://192.168.1.1/proxy/network/api/s/default";
+      insecure = true;
+      headers."X-API-KEY" = "\${var.unifi_api_key}";
+    }
+  ];
 
   variable.wifi_passphrase = {
     type = "string";
@@ -96,30 +147,33 @@ in
     };
   };
 
+  # Resolve LG TV ad/tracking domains to 0.0.0.0 on the gateway's DNS.
   resource.restapi_object = lib.listToAttrs (map
     (domain: {
       name = "dns_block_${lib.replaceStrings [ "." ] [ "_" ] domain}";
-      value = {
+      value = mkV2Object {
         path = "/static-dns";
-        # The v2 API has no GET-by-id (405), so reads search the collection
-        read_path = "/static-dns";
-        read_search = {
-          search_key = "key";
-          search_value = domain;
-        };
-        data = builtins.toJSON {
+        searchKey = "key";
+        data = {
           record_type = "A";
           key = domain;
           value = "0.0.0.0";
           enabled = true;
         };
-        # Reads return server-added fields (_id, ttl, ...) that would diff
-        # against our minimal data forever. These records never change; to
-        # alter one, rename the resource (or tofu taint) to recreate it.
-        lifecycle.ignore_changes = [ "data" ];
       };
     })
-    blockedDomains);
+    blockedDomains) // {
+    # Turn the Express 7's LCM touchscreen off. enabled is the display-off
+    # switch; the rest is retained from the controller defaults so flipping
+    # it back to true is a one-line change.
+    lcm_display = mkV1Setting "lcm" {
+      enabled = false;
+      brightness = 80;
+      idle_timeout = 300;
+      sync = true;
+      touch_event = true;
+    };
+  };
 
   # Default LAN: 192.168.1.0/24
   resource.unifi_network.default = {
