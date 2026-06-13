@@ -2,6 +2,7 @@
 
 {
   home.packages = with pkgs; [
+    _1password-cli
     pkg-config
 
     (pkgs.writeScriptBin "ql" ''

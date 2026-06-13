@@ -17,7 +17,11 @@
   outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, terranix, ... }:
     let
       createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules, pkgs }: home-manager.lib.homeManagerConfiguration {
-        pkgs = pkgs.legacyPackages.${system};
+        pkgs = import pkgs {
+          inherit system;
+          config.allowUnfreePredicate = pkg:
+            builtins.elem (pkgs.lib.getName pkg) [ "1password-cli" ];
+        };
 
         modules = [
           ./modules/shared.nix
