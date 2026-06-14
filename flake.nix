@@ -116,7 +116,7 @@
               exit 1
             fi
 
-            UNIFI_API_KEY=$(cat "$HOME/.config/unifi/api_key")
+            UNIFI_API_KEY=$(cat "$HOME/.config/unifi/api-key")
             export UNIFI_API_KEY
             export UNIFI_API="https://192.168.1.1"
             export UNIFI_INSECURE="true"
