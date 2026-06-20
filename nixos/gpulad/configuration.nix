@@ -224,6 +224,17 @@ in {
   # Tailscale — real kernel networking on the VM (no userspace-networking).
   services.tailscale.enable = true;
 
+  # Eternal Terminal — remote shell that survives network drops and IP roams.
+  # Auth piggybacks on SSH (et bootstraps over port 22, then holds the session
+  # on 2022). Exposed on the tailnet only, matching how lads reach this host.
+  services.eternal-terminal.enable = true;
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 2022 ];
+  # The upstream module runs etserver with --daemon (Type=forking) but sets no
+  # PIDFile, so systemd loses the double-forked daemon and marks the unit dead —
+  # breaking restart-on-failure and spawning duplicates on restart. etserver
+  # writes /run/etserver.pid by default; point systemd at it.
+  systemd.services.eternal-terminal.serviceConfig.PIDFile = "/run/etserver.pid";
+
   programs.nix-ld.enable = true;
 
   services.qemuGuest.enable = true;
