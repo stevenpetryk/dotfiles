@@ -189,6 +189,18 @@ in {
 
     See the keen-mind repo's CLAUDE.md ("Firehose") and SECURITY.md for the
     subject catalog and trust rules.
+
+    ## Scratch (scratch.lads.games)
+
+    A shared space for self-contained HTML explainers and artifacts — a
+    writeup of how something works, a one-off visualization, a slideshow.
+    Drop a `<slug>.html` file into `/var/lib/keen-mind-scratch/` (writable
+    by the `keen-mind-dev` group) and it shows up at `scratch.lads.games`,
+    rendered in a sandboxed frame with an index linking every explainer.
+    Nothing to restart or deploy — the file is picked up live. Give it a
+    `<title>` and a `<meta name="description">` for a readable index card,
+    and keep each one a single self-contained file (inline CSS/JS, data-URI
+    images) since only the `.html` itself is served.
   '';
 
   security.sudo.extraRules = [

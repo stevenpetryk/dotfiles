@@ -3,10 +3,16 @@
 
   inputs = {
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-2605.url = "github:nixos/nixpkgs/nixos-26.05";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
+    # Homelad's home config is built against nixos-26.05, so it needs the
+    # matching home-manager release to avoid a version mismatch.
+    home-manager-2605 = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-2605";
     };
     terranix = {
       url = "github:terranix/terranix";
@@ -14,9 +20,9 @@
     };
   };
 
-  outputs = { nixpkgs-stable, nixpkgs-unstable, home-manager, terranix, ... }:
+  outputs = { nixpkgs-stable, nixpkgs-2605, home-manager, home-manager-2605, terranix, ... }:
     let
-      createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules, pkgs }: home-manager.lib.homeManagerConfiguration {
+      createConfiguration = { system, username, homeDirectory, dotfilesPath, extraModules, pkgs, homeManager ? home-manager }: homeManager.lib.homeManagerConfiguration {
         pkgs = import pkgs {
           inherit system;
           config.allowUnfreePredicate = pkg:
@@ -53,14 +59,15 @@
         extraModules = [ ./modules/personal.nix ];
         pkgs = nixpkgs-stable;
       };
-      # Homelad NixOS LXC - uses unstable to support the Proxmox host's newer NVIDIA kernel driver
+      # Homelad NixOS LXC - tracks 26.05 to stay current with the Proxmox host's newer NVIDIA kernel driver
       homeConfigurations."steven@homelad" = createConfiguration rec {
         system = "x86_64-linux";
         username = "steven";
         homeDirectory = "/home/${username}";
         dotfilesPath = "${homeDirectory}/dotfiles";
         extraModules = [ ./modules/personal.nix ];
-        pkgs = nixpkgs-unstable;
+        pkgs = nixpkgs-2605;
+        homeManager = home-manager-2605;
       };
 
       apps.x86_64-linux.home-manager = {
