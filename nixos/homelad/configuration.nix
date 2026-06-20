@@ -15,7 +15,9 @@
     jacob.sshKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINCmmlPZ75SGKwviVk4/tz3z7ANYvwrCK3oGQ6qbS3Nb"
     ];
-    bill.sshKeys = [];
+    bill.sshKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO/3b6bqPsuEZbMW3UIsZx32F2/RaD6h/fp+eFfnyJRX billspc-to-workstation"
+    ];
     zach.sshKeys = [];
   };
   ladUsers = lib.mapAttrs (_: lad: {
@@ -78,6 +80,14 @@ in {
   ];
 
   networking.hostName = "homelad";
+
+  # This LXC is superseded by the gpulad host. Keep its outward-facing units
+  # dormant so a boot here can't double the Discord bot or contend for the
+  # cloudflared tunnel. Loopback-only services may still run locally.
+  systemd.services.keen-mind.wantedBy = lib.mkForce [];
+  systemd.services.keen-mind-scheduler.wantedBy = lib.mkForce [];
+  systemd.services.keen-mind-coordinator.wantedBy = lib.mkForce [];
+  systemd.services.cloudflared-tunnel.wantedBy = lib.mkForce [];
 
   # Graphics
   hardware.graphics.enable = true;
