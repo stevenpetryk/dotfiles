@@ -77,6 +77,17 @@ in {
     neovim neofetch git rsync htop pciutils nvtopPackages.nvidia uv
   ];
 
+  # --- Collaborative NAS share (TrueNAS, NFS over the 40G path) ---
+  # Browsed/edited by the "Files" tab via keen-mind-web, which writes here as
+  # the keen-mind user through its `users` supplementary group (see the
+  # keen-mind module's keen-mind-web unit). That unit's RequiresMountsFor holds
+  # it until this mount is up, so land this and the unit change in one switch.
+  fileSystems."/mnt/nas-media" = {
+    device = "10.40.40.2:/mnt/Bulk/CT_Media";
+    fsType = "nfs";
+    options = ["nfsvers=4.2" "hard" "noatime" "_netdev" "rsize=1048576" "wsize=1048576"];
+  };
+
   # Grant keen-mind-dev read access to the Agent SDK session transcripts the
   # bot/coordinator write under their homes (0700 keen-mind, jsonl 0600).
   system.activationScripts.keen-mind-agent-home-acls = ''
