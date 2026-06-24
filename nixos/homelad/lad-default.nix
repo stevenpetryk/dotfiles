@@ -158,13 +158,18 @@ in
     # config; if not, we hand them a config and tell them to reconnect).
     # Skip the github round-trip if no keys are loaded, so a shell without
     # agent forwarding stays snappy.
-    gh_user=""
+    # Decide "forwarded" from the local, reliable signal — a usable agent
+    # socket with keys loaded. The GitHub round-trip below is only to show
+    # *which* account; a slow/blocked/timed-out probe must NOT masquerade
+    # as "not forwarded" and hand the user an ssh-config fix they don't need.
     if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -l >/dev/null 2>&1; then
-      gh_user=$(ssh -o ConnectTimeout=3 -o BatchMode=yes -T git@github.com 2>&1 \
+      gh_user=$(ssh -o ConnectTimeout=5 -o BatchMode=yes -T git@github.com 2>&1 \
         | sed -n 's/.*Hi \([^!]*\)!.*/\1/p')
-    fi
-    if [ -n "$gh_user" ]; then
-      print -P "  %F{green}✓%f SSH agent forwarded (GitHub: $gh_user)"
+      if [ -n "$gh_user" ]; then
+        print -P "  %F{green}✓%f SSH agent forwarded (GitHub: $gh_user)"
+      else
+        print -P "  %F{green}✓%f SSH agent forwarded"
+      fi
     else
       print -P "  %F{yellow}!%f SSH agent not forwarded. Recommended ~/.ssh/config on your local machine:"
       print
@@ -183,8 +188,11 @@ in
     fi
 
     # Step 3: Claude Code installed (binary lives at ~/.local/bin/claude,
-    # which the PATH export above makes discoverable).
-    if command -v claude >/dev/null 2>&1; then
+    # which the PATH export above makes discoverable). zach uses Copilot
+    # CLI instead, so don't nag him about a missing `claude`.
+    if [ "$USER" = zach ]; then
+      : # exempt — Copilot CLI user
+    elif command -v claude >/dev/null 2>&1; then
       print -P "  %F{green}✓%f Claude Code installed"
     else
       print -P "  %F{yellow}!%f Claude Code not installed — run:"
