@@ -93,7 +93,7 @@ in
             ${pkgs.coreutils}/bin/install -o ${name} -g users -m 0644 \
               ${pkgs.writeText "direnv.toml" ''
                 [whitelist]
-                prefix = [ "/home/${name}/src/keen-mind" ]
+                prefix = [ "/home/${name}/src/keen-mind" "/home/${name}/code/keen-mind" ]
               ''} \
               /home/${name}/.config/direnv/direnv.toml
           fi
@@ -199,9 +199,17 @@ in
       print -P "       %F{cyan}curl -fsSL https://claude.ai/install.sh | bash%f"
     fi
 
-    # Step 4: keen-mind cloned (direnv is pre-whitelisted for the path).
+    # Step 4: keen-mind cloned (direnv is pre-whitelisted for both paths).
+    # Accept either ~/src/keen-mind or ~/code/keen-mind.
     if [ -d ~/src/keen-mind ]; then
-      print -P "  %F{green}✓%f keen-mind cloned at ~/src/keen-mind"
+      km_dir=~/src/keen-mind
+    elif [ -d ~/code/keen-mind ]; then
+      km_dir=~/code/keen-mind
+    else
+      km_dir=
+    fi
+    if [ -n "$km_dir" ]; then
+      print -P "  %F{green}✓%f keen-mind cloned at $km_dir"
     else
       print -P "  %F{yellow}!%f keen-mind not cloned — run:"
       print -P "       %F{cyan}git clone git@github.com:stevenpetryk/keen-mind ~/src/keen-mind%f"
@@ -212,8 +220,8 @@ in
     print
 
     # Land them where the work is.
-    if [ -d ~/src/keen-mind ]; then
-      cd ~/src/keen-mind
+    if [ -n "$km_dir" ]; then
+      cd "$km_dir"
     else
       cd ~/src
     fi
