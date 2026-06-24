@@ -23,7 +23,9 @@ let
     bill.sshKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO/3b6bqPsuEZbMW3UIsZx32F2/RaD6h/fp+eFfnyJRX billspc-to-workstation"
     ];
-    zach.sshKeys = [];
+    zach.sshKeys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOidWXi8sgA25CFz/N62jOCmf+gYsBkTK6g3HrP41XEB"
+    ];
   };
   ladUsers = lib.mapAttrs (_: lad: {
     isNormalUser = true;
