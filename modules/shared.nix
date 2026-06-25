@@ -104,6 +104,8 @@ in
 
   programs.htop.enable = true;
 
+  programs.btop.enable = true;
+
   programs.bat.enable = true;
 
   programs.zoxide.enable = true;
