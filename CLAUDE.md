@@ -25,7 +25,7 @@ sudo nixos-rebuild switch
 
 The `flake.nix` defines:
 - **Inputs**: `nixpkgs-stable` (25.11), `nixpkgs-unstable`, `home-manager` (release-25.11)
-- **Home Manager configs**: `steven@stevens-mbp-14` (macOS), `steven@gigante` (Linux desktop), `steven@homelad` (NixOS container)
+- **Home Manager configs**: `steven@stevens-mbp-14` (macOS), `steven@gigante` (Linux desktop), `steven@gpulad` (NixOS GPU VM)
 
 NixOS configurations in `nixos/` are standalone (not flake-based) and configure their own channels.
 
@@ -42,7 +42,7 @@ modules/                    # Home Manager modules (user-level)
 
 nixos/                      # NixOS system configurations
 ├── gigante/                # Desktop/gaming machine (KDE Plasma 6, NVIDIA, Steam)
-├── homelad/                # LXC container (headless, NVIDIA, Discord bot)
+├── gpulad/                 # GPU VM on Proxmox (headless, NVIDIA passthrough, Keen Mind)
 └── modules/                # Shared NixOS modules (empty, for future use)
 ```
 
@@ -51,16 +51,16 @@ nixos/                      # NixOS system configurations
 Each home-manager config composes modules:
 - macOS: `shared.nix` + `mac-shared.nix` + `git.nix`
 - gigante: `shared.nix` + `personal.nix` + `git.nix` + `slync.nix`
-- homelad: `shared.nix` + `personal.nix` + `git.nix` + `slync.nix`
+- gpulad: `shared.nix` + `personal.nix` + `git.nix` + `slync.nix`
 
 ### Key Patterns
 
 - `extraSpecialArgs` passes machine-specific config (e.g., `isLinux`, `pkgs-unstable`) to modules
 - `writeShellApplication` / `writeScriptBin` generates CLI tools declaratively
-- homelad uses unstable nixpkgs for newer NVIDIA driver support with Proxmox kernels
+- gpulad tracks nixpkgs 26.05 for newer NVIDIA driver support with Proxmox kernels
 - Cachix binary caches (`cuda-maintainers`, `nix-community`) for faster rebuilds
 
 ### Machine-Specific Notes
 
 - **gigante**: Primary workstation with KDE Plasma 6, proprietary NVIDIA driver, gaming setup (Steam, Lutris, Sunshine streaming)
-- **homelad**: Headless NixOS LXC on Proxmox with GPU passthrough, imports Keen Mind NixOS module via `builtins.getFlake`
+- **gpulad**: Headless NixOS GPU VM on Proxmox (RTX 5060 Ti passthrough, open Blackwell driver), imports Keen Mind NixOS module via `builtins.getFlake`

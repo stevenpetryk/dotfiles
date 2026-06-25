@@ -176,7 +176,7 @@ in
       tailnet=$(tailscale status --self --json 2>/dev/null \
         | jq -r '.Self.DNSName // empty' 2>/dev/null \
         | sed 's/\.$//')
-      : "''${tailnet:=homelad}"
+      : "''${tailnet:=gpulad}"
       bat --plain --paging=never --color=always --language=ssh_config <<EOF | sed 's/^/    /'
     Host homelad
             HostName $tailnet

@@ -59,8 +59,8 @@
         extraModules = [ ./modules/personal.nix ];
         pkgs = nixpkgs-stable;
       };
-      # Homelad NixOS LXC - tracks 26.05 to stay current with the Proxmox host's newer NVIDIA kernel driver
-      homeConfigurations."steven@homelad" = createConfiguration rec {
+      # gpulad NixOS GPU VM - tracks 26.05 to stay current with the Proxmox host's newer NVIDIA kernel driver
+      homeConfigurations."steven@gpulad" = createConfiguration rec {
         system = "x86_64-linux";
         username = "steven";
         homeDirectory = "/home/${username}";

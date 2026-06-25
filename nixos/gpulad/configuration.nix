@@ -1,18 +1,12 @@
-# gpulad — NixOS GPU appliance, being promoted to the consolidated keen-mind host.
+# gpulad — NixOS GPU appliance, the consolidated keen-mind host.
 # PVE VM 102, RTX 5060 Ti (GB206/Blackwell) via PCIe passthrough (hostpci 01:00).
 #
-# This is homelad's config adapted from the LXC to this VM: same keen-mind /
-# lads / services stack, but with VM boot + the open Blackwell nvidia driver,
-# and all the LXC-isms (boot.isContainer, lxc-container.nix, suppressed mount
-# units, userspace-networking tailscale) stripped. Shared lad modules are
-# imported from ../homelad so they stay single-sourced until cutover.
-#
-# Until cutover this VM stays named "gpulad" so it doesn't clash with the live
-# homelad LXC on the tailnet; flip hostName + decommission the LXC at cutover.
+# Runs the full keen-mind / lads / services stack on VM boot with the open
+# Blackwell nvidia driver. (This replaced the old homelad LXC, which has been
+# decommissioned.)
 { config, pkgs, lib, ... }:
 let
-  # Keen Mind collaborators. Mirrors homelad; keep in sync until the LXC is
-  # retired (then this becomes the sole copy).
+  # Keen Mind collaborators.
   lads = {
     chris.sshKeys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDlsmYohoJZEudjDOnn1sOWjQUXKkHy5HCSB9m3dxoFe"
@@ -38,8 +32,8 @@ in {
   imports = [
     ./hardware-configuration.nix
     (builtins.getFlake "git+file:///srv/keen-mind").nixosModules.default
-    ../homelad/cachix.nix
-    ../homelad/lad-default.nix
+    ./cachix.nix
+    ./lad-default.nix
   ];
 
   # --- Boot: BIOS GRUB (matches the nixos-generators image disk layout) ---
@@ -47,7 +41,6 @@ in {
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.efiSupport = false;
 
-  # Until cutover: keep "gpulad" so it doesn't collide with the live homelad LXC.
   networking.hostName = "gpulad";
   networking.useDHCP = lib.mkDefault true;
 
@@ -133,13 +126,12 @@ in {
     };
   };
 
-  # System-wide CLAUDE.md for every account on the host (see homelad for the
-  # rationale on keeping it minimal). Wording still says homelad — it becomes
-  # accurate at cutover when this VM takes that name.
+  # System-wide CLAUDE.md for every account on the host — kept deliberately
+  # minimal so it orients without drowning agents in detail.
   environment.etc."claude-code/CLAUDE.md".text = ''
     ## Environment
 
-    You are on NixOS in a Proxmox VM (`homelad`, the GPU host). The system is
+    You are on NixOS in a Proxmox VM (`gpulad`, the GPU host). The system is
     declaratively configured — software is not installed with apt/dnf/brew.
 
     - Ad-hoc tools: `nix shell nixpkgs#<pkg> -c <cmd>` (or `nix-shell -p
@@ -265,11 +257,10 @@ in {
     };
   };
 
-  # gpulad was installed at 25.11; keep its own stateVersion (per-host, governs
-  # stateful defaults — don't inherit homelad's 24.05).
+  # gpulad was installed at 25.11 (per-host; governs stateful defaults).
   system.stateVersion = "25.11";
 
-  # Match homelad's timezone so scheduler cron semantics are preserved.
+  # Pacific — the scheduler's cron semantics assume this timezone.
   time.timeZone = "America/Los_Angeles";
 
   i18n = {
