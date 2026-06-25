@@ -93,6 +93,64 @@ in
     options = [ "nfsvers=4.2" "hard" "noatime" "_netdev" "rsize=1048576" "wsize=1048576" ];
   };
 
+  # --- App-data backups (TrueNAS, same 40G NFS path as nas-media) ---
+  # Holds the encrypted restic repo for /var/lib/keen-mind. The restic unit
+  # below RequiresMountsFor this path, so they land in one switch.
+  fileSystems."/mnt/nas-backups" = {
+    device = "10.40.40.2:/mnt/Bulk/Nixos_Backups";
+    fsType = "nfs";
+    options = [ "nfsvers=4.2" "hard" "noatime" "_netdev" ];
+  };
+
+  # Daily encrypted, versioned, deduplicated backup of the keen-mind data dir.
+  # Denylist, not allowlist: back up the whole tree and exclude only what we
+  # can regenerate, so a new data dir is captured automatically rather than
+  # silently dropped. SQLite DBs are excluded live and captured as consistent
+  # `.backup` dumps under db-dumps/ (never a raw WAL copy). Repo is encrypted
+  # at rest, so the NAS can push it offsite to B2 without leaking voice data.
+  services.restic.backups.keen-mind = {
+    repository = "/mnt/nas-backups/keen-mind/restic";
+    passwordFile = "/var/secrets/keen-mind/restic-password";
+    initialize = true;
+    backupPrepareCommand = ''
+      mkdir -p /var/lib/keen-mind/db-dumps
+      for db in rag analytics scheduler; do
+        ${pkgs.sqlite}/bin/sqlite3 /var/lib/keen-mind/$db.db \
+          ".backup '/var/lib/keen-mind/db-dumps/$db.db'"
+      done
+    '';
+    paths = [ "/var/lib/keen-mind" ];
+    exclude = [
+      "node_modules"
+      "venvs"
+      "nltk_data"
+      "models"
+      # /var/lib/keen-mind doubles as the service's $HOME, so its home-dir
+      # caches (HF/uv/pip models, bun, etc.) land here — all regenerable.
+      ".cache"
+      ".bun"
+      ".nv"
+      "/var/lib/keen-mind/.local"
+      "/var/lib/keen-mind/recordings/combined"
+      "/var/lib/keen-mind/soundboard/normalized"
+      "/var/lib/keen-mind/soundboard/embeddings.bin"
+      "/var/lib/keen-mind/soundboard/upload-drafts"
+      "/var/lib/keen-mind/rag.db"
+      "/var/lib/keen-mind/analytics.db"
+      "/var/lib/keen-mind/scheduler.db"
+      "*.backup-pre-*"
+      "*.pre-*-bak"
+      "*-wal"
+      "*-shm"
+    ];
+    timerConfig = { OnCalendar = "daily"; RandomizedDelaySec = "1h"; };
+    pruneOpts = [ "--keep-daily 7" "--keep-weekly 4" "--keep-monthly 12" ];
+  };
+
+  # The restic module doesn't know its repo lives on NFS — hold the unit until
+  # the mount is up so a slow-NFS boot can't initialize an empty repo.
+  systemd.services.restic-backups-keen-mind.unitConfig.RequiresMountsFor = "/mnt/nas-backups";
+
   # Grant keen-mind-dev read access to the Agent SDK session transcripts the
   # bot/coordinator write under their homes (0700 keen-mind, jsonl 0600).
   system.activationScripts.keen-mind-agent-home-acls = ''
