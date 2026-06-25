@@ -21,14 +21,17 @@ let
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOidWXi8sgA25CFz/N62jOCmf+gYsBkTK6g3HrP41XEB"
     ];
   };
-  ladUsers = lib.mapAttrs (_: lad: {
-    isNormalUser = true;
-    hashedPassword = "!";
-    extraGroups = ["keen-mind-dev" "systemd-journal"];
-    shell = pkgs.zsh;
-    openssh.authorizedKeys.keys = lad.sshKeys;
-  }) lads;
-in {
+  ladUsers = lib.mapAttrs
+    (_: lad: {
+      isNormalUser = true;
+      hashedPassword = "!";
+      extraGroups = [ "keen-mind-dev" "systemd-journal" ];
+      shell = pkgs.zsh;
+      openssh.authorizedKeys.keys = lad.sshKeys;
+    })
+    lads;
+in
+{
   imports = [
     ./hardware-configuration.nix
     (builtins.getFlake "git+file:///srv/keen-mind").nixosModules.default
@@ -50,7 +53,7 @@ in {
   # package. nvidiaPersistenced keeps the GPU initialized for the always-on
   # inference/ollama loads.
   hardware.graphics.enable = true;
-  services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
     open = true;
     package = config.boot.kernelPackages.nvidiaPackages.beta;
@@ -61,7 +64,7 @@ in {
 
   # Nix
   nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.nixPath = [
     "nixos-config=/home/steven/dotfiles/nixos/gpulad/configuration.nix"
     "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos"
@@ -69,7 +72,14 @@ in {
   ];
 
   environment.systemPackages = with pkgs; [
-    neovim neofetch git rsync htop pciutils nvtopPackages.nvidia uv
+    neovim
+    neofetch
+    git
+    rsync
+    htop
+    pciutils
+    nvtopPackages.nvidia
+    uv
   ];
 
   # --- Collaborative NAS share (TrueNAS, NFS over the 40G path) ---
@@ -80,7 +90,7 @@ in {
   fileSystems."/mnt/nas-media" = {
     device = "10.40.40.2:/mnt/Bulk/CT_Media";
     fsType = "nfs";
-    options = ["nfsvers=4.2" "hard" "noatime" "_netdev" "rsize=1048576" "wsize=1048576"];
+    options = [ "nfsvers=4.2" "hard" "noatime" "_netdev" "rsize=1048576" "wsize=1048576" ];
   };
 
   # Grant keen-mind-dev read access to the Agent SDK session transcripts the
@@ -110,12 +120,12 @@ in {
 
   users = {
     mutableUsers = false;
-    groups.keen-mind-dev = {};
+    groups.keen-mind-dev = { };
     users = ladUsers // {
       steven = {
         isNormalUser = true;
         hashedPassword = "!";
-        extraGroups = ["wheel" "keen-mind-dev"];
+        extraGroups = [ "wheel" "keen-mind-dev" ];
         shell = pkgs.zsh;
         openssh.authorizedKeys.keys = [
           # Sync with https://github.com/stevenpetryk.keys
@@ -198,18 +208,18 @@ in {
 
   security.sudo.extraRules = [
     {
-      users = ["steven"];
+      users = [ "steven" ];
       commands = [
-        { command = "ALL"; options = ["NOPASSWD"]; }
+        { command = "ALL"; options = [ "NOPASSWD" ]; }
       ];
     }
     {
-      groups = ["keen-mind-dev"];
+      groups = [ "keen-mind-dev" ];
       commands = [
-        { command = "/run/current-system/sw/bin/systemctl restart keen-mind"; options = ["NOPASSWD"]; }
-        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = ["NOPASSWD"]; }
-        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = ["NOPASSWD"]; }
-        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-ingress"; options = ["NOPASSWD"]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-ingress"; options = [ "NOPASSWD" ]; }
       ];
     }
   ];
@@ -233,29 +243,31 @@ in {
   services.qemuGuest.enable = true;
 
   # Foundry VTT — vtt.lads.games
-  systemd.services.vtt = let
-    launcher = pkgs.writeShellApplication {
-      name = "launch-vtt";
-      runtimeInputs = with pkgs; [ nodejs_20 ];
-      text = ''
-        cd /home/steven/src/vtt-private/resources/app/
-        node main.js --port=3006 --dataPath=/var/lib/vtt --proxySSL=true --hostname=vtt.lads.games
-      '';
+  systemd.services.vtt =
+    let
+      launcher = pkgs.writeShellApplication {
+        name = "launch-vtt";
+        runtimeInputs = with pkgs; [ nodejs_20 ];
+        text = ''
+          cd /home/steven/src/vtt-private/resources/app/
+          node main.js --port=3006 --dataPath=/var/lib/vtt --proxySSL=true --hostname=vtt.lads.games
+        '';
+      };
+    in
+    {
+      description = "Foundry Virtual Tabletop";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        User = "steven";
+        ExecStart = "${launcher}/bin/launch-vtt";
+        Restart = "always";
+        RestartSec = "5";
+        StateDirectory = "vtt";
+      };
     };
-  in {
-    description = "Foundry Virtual Tabletop";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "simple";
-      User = "steven";
-      ExecStart = "${launcher}/bin/launch-vtt";
-      Restart = "always";
-      RestartSec = "5";
-      StateDirectory = "vtt";
-    };
-  };
 
   # gpulad was installed at 25.11 (per-host; governs stateful defaults).
   system.stateVersion = "25.11";
