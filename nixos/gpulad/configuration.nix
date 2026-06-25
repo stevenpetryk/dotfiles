@@ -35,8 +35,16 @@ in
   imports = [
     ./hardware-configuration.nix
     (builtins.getFlake "git+file:///srv/keen-mind").nixosModules.default
+    (builtins.getFlake "git+file:///srv/clad").nixosModules.default
     ./cachix.nix
     ./lad-default.nix
+  ];
+
+  # Clad — Claude's Discord harness (module + code at /srv/clad, runs as the
+  # `clad` user). Watches #hackathon + the dogfood channel.
+  services.clad.watchChannels = [
+    "1361455253769158914" # #hackathon
+    "1513218557494952046" # #keen-mind-dreams (dogfood)
   ];
 
   # --- Boot: BIOS GRUB (matches the nixos-generators image disk layout) ---
