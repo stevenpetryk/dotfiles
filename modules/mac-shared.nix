@@ -3,6 +3,7 @@
 {
   home.packages = with pkgs; [
     _1password-cli
+    eternal-terminal  # `et` client — auto-reconnecting remote shell (see homelad etserver)
     pkg-config
 
     (pkgs.writeScriptBin "ql" ''

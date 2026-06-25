@@ -149,6 +149,13 @@ in {
     };
   };
 
+  # Eternal Terminal — auto-reconnecting remote shell. Survives SSH drops,
+  # IP changes, and laptop sleep, so a flaky link no longer kills long-running
+  # TUIs (e.g. Claude Code) mid-session. Initial auth tunnels over SSH; the
+  # persistent session then runs on port 2022. Reachable over the tailnet the
+  # same way openssh is (userspace netstack forwards inbound to localhost).
+  services.eternal-terminal.enable = true;
+
   programs.zsh.enable = true;
 
   users = {
