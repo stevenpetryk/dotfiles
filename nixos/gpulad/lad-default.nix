@@ -16,8 +16,8 @@ let
   # rule shouldn't even mention steven's home).
   lads = lib.filterAttrs
     (_: u:
-      builtins.elem "keen-mind-dev" (u.extraGroups or [])
-      && !builtins.elem "wheel" (u.extraGroups or []))
+      builtins.elem "keen-mind-dev" (u.extraGroups or [ ])
+      && !builtins.elem "wheel" (u.extraGroups or [ ]))
     config.users.users;
 in
 {
@@ -35,6 +35,7 @@ in
     delta
     direnv
     pure-prompt
+    tmux
   ];
 
   # Zsh defaults that apply to every interactive shell. Steven's home-manager
