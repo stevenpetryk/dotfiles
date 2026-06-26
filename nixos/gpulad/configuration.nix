@@ -90,6 +90,18 @@ in
     uv
   ];
 
+  # --- 40G storage link to the TrueNAS (10.40.40.0/29) ---
+  # Static, because the storage segment has no DHCP. This used to be set
+  # imperatively (`ip addr add 10.40.40.3/29 dev ens19`), which silently
+  # vanished on the 2026-06-25 reboot and took both NAS mounts below down with
+  # it. Declared here so a reboot can't drop it again. useDHCP=false also stops
+  # the NIC pointlessly soliciting a lease that never comes.
+  networking.interfaces.ens19 = {
+    useDHCP = false;
+    mtu = 9000; # jumbo frames, matches the NAS side
+    ipv4.addresses = [{ address = "10.40.40.3"; prefixLength = 29; }];
+  };
+
   # --- Collaborative NAS share (TrueNAS, NFS over the 40G path) ---
   # Browsed/edited by the "Files" tab via keen-mind-web, which writes here as
   # the keen-mind user through its `users` supplementary group (see the
@@ -159,6 +171,29 @@ in
   # the mount is up so a slow-NFS boot can't initialize an empty repo.
   systemd.services.restic-backups-keen-mind.unitConfig.RequiresMountsFor = "/mnt/nas-backups";
 
+  # Daily encrypted backup of the Foundry VTT data dir (worlds/systems/modules/
+  # Config). This is the safety net for the 12→14 upgrade: world migrations are
+  # one-way on first launch, so a snapshot must exist before anyone pulls the
+  # trigger. Same NFS repo path + offsite story as keen-mind above.
+  services.restic.backups.vtt = {
+    repository = "/mnt/nas-backups/vtt/restic";
+    passwordFile = "/var/secrets/vtt/restic-password";
+    initialize = true;
+    paths = [ "/var/lib/vtt" ];
+    exclude = [
+      "node_modules"
+      ".cache"
+      ".nix-defexpr"
+      # Foundry's own rotating logs — regenerable.
+      "/var/lib/vtt/Logs"
+      "*-wal"
+      "*-shm"
+    ];
+    timerConfig = { OnCalendar = "daily"; RandomizedDelaySec = "1h"; };
+    pruneOpts = [ "--keep-daily 7" "--keep-weekly 4" "--keep-monthly 12" ];
+  };
+  systemd.services.restic-backups-vtt.unitConfig.RequiresMountsFor = "/mnt/nas-backups";
+
   # Grant keen-mind-dev read access to the Agent SDK session transcripts the
   # bot/coordinator write under their homes (0700 keen-mind, jsonl 0600).
   system.activationScripts.keen-mind-agent-home-acls = ''
@@ -187,7 +222,18 @@ in
   users = {
     mutableUsers = false;
     groups.keen-mind-dev = { };
+    groups.vtt = { };
     users = ladUsers // {
+      # Foundry VTT service user. Primary group `vtt`, but the unit runs with
+      # supplementary group `keen-mind-dev` (see systemd.services.vtt) so the
+      # app + data dirs are group-owned by the dev group and the lads can run
+      # the update end-to-end (swap app, migrate worlds) without steven.
+      vtt = {
+        isSystemUser = true;
+        group = "vtt";
+        home = "/var/lib/vtt";
+        description = "Foundry Virtual Tabletop";
+      };
       steven = {
         isNormalUser = true;
         hashedPassword = "!";
@@ -230,12 +276,13 @@ in
     - To develop: clone `https://github.com/stevenpetryk/keen-mind` into
       your home directory and work from there. Project-specific guidance
       lives in that repo's `CLAUDE.md`.
-    - Production data: `/var/lib/keen-mind` (mode 2750, owned
-      `keen-mind:keen-mind-dev`). You can **read** it (point a local dev
-      server at it via `KEEN_MIND_DATA_DIR=/var/lib/keen-mind`) but writes
-      will fail with `EACCES` — that's intentional. If your task needs
-      writable data, copy what you need to `~/keen-mind-data-dev/` or
-      ask steven about the OverlayFS staging pattern used by the bot.
+    - Production data: `/var/lib/keen-mind` (mode 2770, owned
+      `keen-mind:keen-mind-dev`). Your group can **read and write** it —
+      point a local dev server at it via
+      `KEEN_MIND_DATA_DIR=/var/lib/keen-mind`, and edit/curate it in place.
+      The data dir is backed up daily (restic), which is what makes the
+      writable posture safe; still, treat destructive edits with care since
+      everyone in the group shares this tree and the live services read it.
 
     ## Permissions (`keen-mind-dev` group)
 
@@ -246,8 +293,17 @@ in
       merged work reaches production.
     - `sudo systemctl restart keen-mind` / `keen-mind-web` /
       `keen-mind-scheduler` / `keen-mind-ingress`
+    - `sudo systemctl restart vtt` — Foundry VTT (vtt.lads.games)
 
     You do not have general sudo. To ship: PR → merge → `keen-mind-deploy`.
+
+    ## Foundry VTT (vtt.lads.games)
+
+    A patched Foundry checkout. App code at `/srv/vtt` and data at
+    `/var/lib/vtt` are both group-owned `vtt:keen-mind-dev`, mode 2770 — your
+    group can **read and write** both, and restart the unit (see above). The
+    data dir is backed up daily (restic), so the worlds survive the one-way
+    migration the 12→14 upgrade triggers. Logs: `journalctl -u vtt`.
 
     ## Logs
 
@@ -286,6 +342,7 @@ in
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-ingress"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart vtt"; options = [ "NOPASSWD" ]; }
       ];
     }
   ];
@@ -309,13 +366,21 @@ in
   services.qemuGuest.enable = true;
 
   # Foundry VTT — vtt.lads.games
+  #
+  # App code lives at /srv/vtt (group-owned vtt:keen-mind-dev, mode 2770) — a
+  # patched Foundry checkout, the source of truth for what's running. The unit
+  # runs as the `vtt` user with supplementary group `keen-mind-dev`, and the
+  # data dir /var/lib/vtt (StateDirectory, mode 2770) is owned vtt:keen-mind-dev.
+  # Both group-writable so the lads can run the 12→14 update end-to-end (swap the
+  # app, migrate worlds) without steven's hands — see security.sudo.extraRules
+  # for the restart scope and services.restic.backups.vtt for the daily backup.
   systemd.services.vtt =
     let
       launcher = pkgs.writeShellApplication {
         name = "launch-vtt";
         runtimeInputs = with pkgs; [ nodejs_20 ];
         text = ''
-          cd /home/steven/src/vtt-private/resources/app/
+          cd /srv/vtt/resources/app/
           node main.js --port=3006 --dataPath=/var/lib/vtt --proxySSL=true --hostname=vtt.lads.games
         '';
       };
@@ -327,11 +392,16 @@ in
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
-        User = "steven";
+        User = "vtt";
+        Group = "keen-mind-dev";
         ExecStart = "${launcher}/bin/launch-vtt";
         Restart = "always";
         RestartSec = "5";
         StateDirectory = "vtt";
+        StateDirectoryMode = "2770";
+        # Files Foundry writes under the data dir inherit group rw, so the dev
+        # group can read/write the migrated worlds.
+        UMask = "0007";
       };
     };
 
