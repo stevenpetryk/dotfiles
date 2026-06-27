@@ -47,6 +47,14 @@ in
     "1513218557494952046" # #keen-mind-dreams (dogfood)
   ];
 
+  # Surface clad's Claude Agent SDK transcripts in the lads.games debug tab.
+  # keen-mind stays clad-agnostic; this host-side env points keen-mind-web at
+  # clad's home (read access granted by the ACL in clad's nixos module).
+  systemd.services.keen-mind-web.environment.KEEN_MIND_EXTRA_AGENT_HOMES =
+    builtins.toJSON [
+      { label = "clad"; home = "/var/lib/clad"; color = "#a78bfa"; }
+    ];
+
   # --- Boot: BIOS GRUB (matches the nixos-generators image disk layout) ---
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
@@ -292,7 +300,7 @@ in
       `/srv/keen-mind` and rebuilds/restarts only what changed. This is how
       merged work reaches production.
     - `sudo systemctl restart keen-mind` / `keen-mind-web` /
-      `keen-mind-scheduler` / `keen-mind-ingress`
+      `keen-mind-scheduler`
     - `sudo systemctl restart vtt` — Foundry VTT (vtt.lads.games)
 
     You do not have general sudo. To ship: PR → merge → `keen-mind-deploy`.
@@ -312,7 +320,6 @@ in
     - `journalctl -u keen-mind` — Discord bot
     - `journalctl -u keen-mind-web` — transcript viewer
     - `journalctl -u keen-mind-scheduler` — schedule firing loop
-    - `journalctl -u keen-mind-ingress` — webhook ingress (hooks.lads.games)
     - `journalctl -u nats` — firehose broker (NATS JetStream)
     - `journalctl -u keen-mind-deploy` — last deploy
 
@@ -341,7 +348,6 @@ in
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = [ "NOPASSWD" ]; }
-        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-ingress"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart vtt"; options = [ "NOPASSWD" ]; }
       ];
     }
