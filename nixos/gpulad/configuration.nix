@@ -38,6 +38,7 @@ in
     (builtins.getFlake "git+file:///srv/clad").nixosModules.default
     ./cachix.nix
     ./lad-default.nix
+    ./clad-egress.nix
   ];
 
   # Clad — Claude's Discord harness (module + code at /srv/clad, runs as the
@@ -349,6 +350,24 @@ in
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl restart vtt"; options = [ "NOPASSWD" ]; }
+      ];
+    }
+    # Clad's scoped NOPASSWD set. Declared HERE (steven-owned, clad-unwritable)
+    # rather than in clad's own module (/srv/clad, which clad can edit) so clad
+    # cannot rewrite the definition of its own privileges. See the TRUST POSTURE
+    # comment in clad's nixos/module.nix. Deliberately EXCLUDES `nixos-rebuild
+    # switch` (clad must not apply host config / widen its own grant) and
+    # `keen-mind-deploy-force` (clad must not bypass the pre-deploy security
+    # review) — clad deploys keen-mind only via the reviewed `keen-mind-deploy`.
+    {
+      users = [ "clad" ];
+      commands = [
+        { command = "/run/current-system/sw/bin/systemctl start keen-mind-deploy"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-web"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-scheduler"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart keen-mind-coordinator"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/systemctl restart clad"; options = [ "NOPASSWD" ]; }
       ];
     }
   ];
