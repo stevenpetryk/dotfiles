@@ -66,6 +66,11 @@ in
   # risk here (the only host firewall rule is a tailscale port), but it IS a
   # backend switch — verify the tailscale 2022 rule still applies after rebuild.
   networking.nftables.enable = true;
+  # skuid rules reference users by NAME; the build-time `nft -c` check runs in a
+  # sandbox where clad-browser/clad don't exist in /etc/passwd, so it can't
+  # resolve them. Skip that check — the live system resolves the names fine, and
+  # nftables.service activation still fails loudly on a genuinely bad ruleset.
+  networking.nftables.checkRuleset = false;
   networking.nftables.tables.clad-egress = {
     family = "inet";
     content = ''
