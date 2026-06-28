@@ -380,6 +380,13 @@ in
   # on 2022). Exposed on the tailnet only, matching how lads reach this host.
   services.eternal-terminal.enable = true;
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 2022 ];
+  # keen-mind dev servers (vite browser-facing :800x + proxied API) run in the
+  # 8000-8049 range and are meant to be reached over MagicDNS. The native
+  # nftables backend (enabled in clad-egress.nix) stopped honoring tailscale's
+  # accept-all-on-tailscale0 rule, so dev ports must be allowed explicitly.
+  networking.firewall.interfaces.tailscale0.allowedTCPPortRanges = [
+    { from = 8000; to = 8999; }
+  ];
   # The upstream module runs etserver with --daemon (Type=forking) but sets no
   # PIDFile, so systemd loses the double-forked daemon and marks the unit dead —
   # breaking restart-on-failure and spawning duplicates on restart. etserver
