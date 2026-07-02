@@ -61,6 +61,7 @@ let
     "releases.nixos.org" = "releases.nixos.org:443"; # nix channels / eval
     "channels.nixos.org" = "channels.nixos.org:443"; # nix channels / eval
     "registry.npmjs.org" = "registry.npmjs.org:443"; # bun / npm deps
+    "oauth2.googleapis.com" = "oauth2.googleapis.com:443"; # GCP SA token exchange (clad's Vertex SA)
   };
   # Destinations that bypass the SNI proxy entirely and go out directly.
   # Tailscale peer IPs don't reliably hit the `nat_out` redirect below — its
@@ -199,6 +200,10 @@ in
         ~^([a-z0-9-]+\.)?discordapp\.net$    $ssl_preread_server_name:443;
         # githubusercontent buckets rotate subdomains.
         ~^([a-z0-9-]+\.)?githubusercontent\.com$  $ssl_preread_server_name:443;
+        # Vertex AI — global + regional endpoints (us-central1-aiplatform, …).
+        # Deliberately aiplatform only, NOT all of googleapis.com: the SA is
+        # Vertex-scoped and the egress boundary should match.
+        ~^([a-z0-9-]+-)?aiplatform\.googleapis\.com$  $ssl_preread_server_name:443;
         ''}
       }
 
