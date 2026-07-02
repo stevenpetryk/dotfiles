@@ -97,6 +97,7 @@ in
     pciutils
     nvtopPackages.nvidia
     uv
+    glab
   ];
 
   # --- 40G storage link to the TrueNAS (10.40.40.0/29) ---
@@ -373,7 +374,11 @@ in
   ];
 
   # Tailscale — real kernel networking on the VM (no userspace-networking).
+  # accept-dns: lets gpulad resolve other tailnet peers by MagicDNS name
+  # (e.g. gitlab-proto.tail324fea.ts.net for the GitLab CI runner) instead
+  # of hardcoding tailnet IPs.
   services.tailscale.enable = true;
+  services.tailscale.extraUpFlags = [ "--accept-dns=true" ];
 
   # Eternal Terminal — remote shell that survives network drops and IP roams.
   # Auth piggybacks on SSH (et bootstraps over port 22, then holds the session

@@ -31,30 +31,46 @@
 
 let
   # Master switch for control B. Move open → observe → (tune allow) → lock.
-  egressMode = "observe";   # "open" | "observe" | "lock"
+  egressMode = "lock"; # "open" | "observe" | "lock"
 
-  lockEgress   = egressMode == "lock";
-  observe      = egressMode == "observe";
-  redirectClad = lockEgress || observe;   # both route clad's :443 to the proxy
+  lockEgress = egressMode == "lock";
+  observe = egressMode == "observe";
+  redirectClad = lockEgress || observe; # both route clad's :443 to the proxy
 
-  # The host's upstream resolver. systemd-resolved is NOT enabled here, so the
-  # 127.0.0.53 stub doesn't answer — point nginx at the real nameserver (matches
-  # /etc/resolv.conf). nginx needs this to resolve passthrough/allowlist hosts.
-  resolver = "192.168.1.1";
+  # The host's upstream resolvers. systemd-resolved is NOT enabled here, so the
+  # 127.0.0.53 stub doesn't answer — point nginx at the real nameservers (matches
+  # /etc/resolv.conf): the LAN router for normal internet hosts, plus
+  # Tailscale's quad-100 MagicDNS resolver for *.ts.net names (e.g. clad
+  # reaching gitlab-proto.tail324fea.ts.net) now that accept-dns is on host-wide.
+  resolver = "192.168.1.1 100.100.100.100";
 
   # Allowlist for `lock` (matched against the TLS SNI). Build this from the
   # `observe`-mode SNI log before flipping to lock. Keep tight — it's the egress
   # boundary. Each entry is also a small exfil surface.
   allow = {
-    "api.anthropic.com" = "api.anthropic.com:443";              # Claude SDK / CLI
-    "statsig.anthropic.com" = "statsig.anthropic.com:443";      # CLI telemetry; drop if you'd rather
-    "github.com" = "github.com:443";
+    "api.anthropic.com" = "api.anthropic.com:443"; # Claude SDK / CLI
+    "mcp-proxy.anthropic.com" = "mcp-proxy.anthropic.com:443"; # claude.ai MCP integrations (Gmail/Calendar/Drive/Monarch/…)
+    "statsig.anthropic.com" = "statsig.anthropic.com:443"; # CLI telemetry; drop if you'd rather
+    "downloads.claude.ai" = "downloads.claude.ai:443"; # Claude CLI asset/update downloads
+    "platform.claude.com" = "platform.claude.com:443"; # Claude platform
+    "github.com" = "github.com:443"; # GitHub API/HTTPS (git-SSH is deliberately cut — clad's git is GitLab over the tailnet)
     "api.github.com" = "api.github.com:443";
     "codeload.github.com" = "codeload.github.com:443";
     "objects.githubusercontent.com" = "objects.githubusercontent.com:443";
-    "cache.nixos.org" = "cache.nixos.org:443";                  # nix substituter
+    "cache.nixos.org" = "cache.nixos.org:443"; # nix substituter
+    "releases.nixos.org" = "releases.nixos.org:443"; # nix channels / eval
+    "channels.nixos.org" = "channels.nixos.org:443"; # nix channels / eval
+    "registry.npmjs.org" = "registry.npmjs.org:443"; # bun / npm deps
   };
-  nginxPort = 8443;     # clad's redirected 443 lands here
+  # Destinations that bypass the SNI proxy entirely and go out directly.
+  # Tailscale peer IPs don't reliably hit the `nat_out` redirect below — its
+  # own policy routing for the 100.64.0.0/10 CGNAT range appears to win before
+  # our nat hook does — so proxying tailnet traffic through nginx just hangs.
+  # Narrow, single-IP carve-out rather than exempting the whole tailnet range.
+  tailnetDirect = {
+    "gitlab-proto" = "100.91.188.72"; # gitlab-proto.tail324fea.ts.net — CI/glab for clad
+  };
+  nginxPort = 8443; # clad's redirected 443 lands here
   deadEnd = "127.0.0.1:1"; # non-allowlisted / no-SNI proxies here → refused
   sniLog = "/var/log/nginx/clad-egress-sni.log"; # observe/lock SNI access log
 in
@@ -95,6 +111,8 @@ in
       # is loopback, so the loopback-accepts below cover it.
       chain nat_out {
         type nat hook output priority -100; policy accept;
+        ${lib.concatStringsSep "\n        "
+          (lib.mapAttrsToList (name: ip: ''meta skuid "clad" ip daddr ${ip} return # ${name}: direct, no SNI proxy'') tailnetDirect)}
         meta skuid "clad" tcp dport 443 redirect to :${toString nginxPort}
       }
       ''}
@@ -111,6 +129,11 @@ in
         # A. Browser → loopback only. Everything else dropped (strictly localhost).
         meta skuid "clad-browser" drop
 
+        # tailnetDirect: accepted here so `lock` mode's drop-all-else below
+        # doesn't catch these — they never go through the SNI proxy/allowlist.
+        ${lib.concatStringsSep "\n        "
+          (lib.mapAttrsToList (name: ip: ''meta skuid "clad" ip daddr ${ip} accept # ${name}'') tailnetDirect)}
+
         ${lib.optionalString observe ''
         # B/observe: log clad's egress that ISN'T the redirected-to-loopback :443
         # (nginx already captures those as SNI). Catches HTTP/3 (UDP 443), plain
@@ -120,8 +143,21 @@ in
         ''}
 
         ${lib.optionalString lockEgress ''
+        # DNS carve-out: clad's ONLY resolver is Tailscale MagicDNS
+        # (100.100.100.100, per resolv.conf — systemd-resolved is off, no
+        # loopback stub). Without this the drop below kills all name resolution,
+        # so clad reaches nothing — even the proxied :443 hosts, since it still
+        # resolves the name to an IP before the nat redirect fires. MagicDNS
+        # forwards public names upstream, so this one resolver covers tailnet +
+        # internet alike.
+        meta skuid "clad" ip daddr 100.100.100.100 udp dport 53 accept
+        meta skuid "clad" ip daddr 100.100.100.100 tcp dport 53 accept
+
         # B/lock: any external destination from clad (other than the redirected
-        # :443 accepted above) is dropped — no direct egress.
+        # :443 accepted above) is dropped — no direct egress. This deliberately
+        # includes git-SSH to github.com:22 (SSH has no TLS SNI, so it can't ride
+        # the proxy) — clad's git is keen-mind on GitLab, reached direct over the
+        # tailnet (tailnetDirect above), so GitHub egress is not needed.
         meta skuid "clad" drop
         ''}
       }
