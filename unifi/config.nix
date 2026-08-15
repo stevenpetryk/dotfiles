@@ -114,6 +114,14 @@ in
       name = "LG TV (wired)";
       fixed_ip = "192.168.1.201";
     };
+    # WLED donut lamp: pinned so the HA wled integration's host never goes
+    # stale. Weak 2.4GHz client — its TX power is raised to 15dBm in the
+    # WLED UI (Config > WiFi) after ARP flakiness at the default 8.5dBm.
+    wled_donut = {
+      mac = "ac:27:6e:7e:2d:ac";
+      name = "WLED Donut";
+      fixed_ip = "192.168.1.95";
+    };
   };
 
   resource.unifi_firewall_rule = {
